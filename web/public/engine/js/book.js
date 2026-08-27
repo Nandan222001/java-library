@@ -375,16 +375,24 @@ btnPrev.addEventListener('click', goPrev);
 btnNext.addEventListener('click', goNext);
 
 /* ---------------- touch swipe (mobile single-page mode) ---------------- */
-var touchX = null;
+/* Only dx was checked before, so a mostly-vertical drag (scrolling a tall
+   paragraph/code block with a finger) that happened to also drift >40px
+   sideways — very common with real fingers — fired a page flip mid-scroll.
+   Require the gesture to be clearly more horizontal than vertical before
+   treating it as a page-turn swipe. */
+var touchX = null, touchY = null;
 wrapEl.addEventListener('touchstart', function (e) {
-  if (!isMobile || e.touches.length !== 1) { touchX = null; return; }
+  if (!isMobile || e.touches.length !== 1) { touchX = null; touchY = null; return; }
   touchX = e.touches[0].clientX;
+  touchY = e.touches[0].clientY;
 }, { passive: true });
 wrapEl.addEventListener('touchend', function (e) {
   if (touchX == null) return;
   var dx = e.changedTouches[0].clientX - touchX;
-  touchX = null;
+  var dy = e.changedTouches[0].clientY - touchY;
+  touchX = null; touchY = null;
   if (Math.abs(dx) < 40) return;
+  if (Math.abs(dx) < Math.abs(dy) * 1.2) return;   // mostly vertical → scroll, not a page swipe
   if (dx < 0) goNext(); else goPrev();
 });
 scrub.addEventListener('input', function () { goTo(parseInt(scrub.value, 10), true); });
@@ -498,14 +506,47 @@ searchRes.addEventListener('click', function (e) {
 });
 
 /* ---------------- keyboard ---------------- */
+/* Space/PageDown/PageUp double as "scroll down/up" almost everywhere on the
+   web — readers reflexively hit them to move through a long paragraph or a
+   tall code block. If we always treat them as page-turns, content that
+   hasn't finished scrolling gets yanked away mid-read. Scroll the CURRENT
+   page's content first; only flip once it's already at that edge (or has
+   nothing to scroll). ArrowLeft/Right are left as immediate page-turns —
+   they don't double as scroll keys, so there's nothing to disambiguate. */
+function currentPageBodies() {
+  function pgBody(leafIdx, front) {
+    var l = leaves[leafIdx];
+    var face = l && (front ? l.firstChild : l.lastChild);
+    return face && face.querySelector('.pg-body');
+  }
+  var out = [];
+  if (isMobile) {
+    var pb = mFront ? (f < N && pgBody(f, true)) : (f > 0 && pgBody(f - 1, false));
+    if (pb) out.push(pb);
+  } else {
+    if (f > 0) { var b = pgBody(f - 1, false); if (b) out.push(b); }
+    if (f < N) { var fr = pgBody(f, true); if (fr) out.push(fr); }
+  }
+  return out;
+}
+function scrollCurrentPages(dir) {   // dir: 1 = down, -1 = up. Returns true if it actually scrolled.
+  var moved = false;
+  currentPageBodies().forEach(function (el) {
+    var can = dir > 0 ? el.scrollTop + el.clientHeight < el.scrollHeight - 1 : el.scrollTop > 0;
+    if (can) { el.scrollBy({ top: dir * el.clientHeight * 0.85, behavior: 'smooth' }); moved = true; }
+  });
+  return moved;
+}
 document.addEventListener('keydown', function (e) {
   var tag = (e.target.tagName || '').toUpperCase();
   var typing = tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable;
   if (e.key === 'Escape') { closeSearch(); drawer.classList.remove('open'); if (typing) e.target.blur(); return; }
   if (typing) return;
   switch (e.key) {
-    case 'ArrowRight': case 'PageDown': case ' ': e.preventDefault(); goNext(); break;
-    case 'ArrowLeft': case 'PageUp': e.preventDefault(); goPrev(); break;
+    case 'ArrowRight': e.preventDefault(); goNext(); break;
+    case 'ArrowLeft': e.preventDefault(); goPrev(); break;
+    case 'PageDown': case ' ': e.preventDefault(); if (!scrollCurrentPages(1)) goNext(); break;
+    case 'PageUp': e.preventDefault(); if (!scrollCurrentPages(-1)) goPrev(); break;
     case 'Home': e.preventDefault(); goTo(0, true); break;
     case 'End': e.preventDefault(); goTo(N, true); break;
     case '/': e.preventDefault(); searchBox.focus(); searchBox.select(); break;
