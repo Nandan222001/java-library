@@ -29,11 +29,22 @@ h3.sec{font-family:'Playfair Display',serif;font-weight:700;font-size:19.5px;mar
   display:flex;align-items:center;gap:9px}
 h3.sec::before{content:'';flex:0 0 auto;width:20px;height:4px;border-radius:3px;background:var(--accent)}
 h4.sub{font:700 15px 'Crimson Pro',serif;margin:11px 0 5px;color:var(--accent-deep);letter-spacing:.02em}
-p{margin:7px 0;line-height:1.52}
+/* :where(.is-reader) — this stylesheet is a static <link> loaded on every
+   SPA route, not just the reader, so bare element selectors here leak
+   onto the app shell's own <p>/<b>/<strong> tags too. strong/b did real
+   damage: color:var(--ink-strong) is a near-black brown meant to sit on
+   the reader's light paper background, but on the shell's own dark
+   background it made bold text (Account's subscription date, points,
+   streaks — anything in a <b>) completely invisible. :where() adds zero
+   specificity, unlike a plain ".is-reader p" descendant selector, which
+   would out-rank same-specificity reader-internal overrides like
+   .bc-blurb's line-height (a class selector beats a bare "p" today —
+   scoping by increasing specificity would flip that and break it). */
+:where(.is-reader) p{margin:7px 0;line-height:1.52}
 ul,ol{margin:6px 0 10px;padding-left:20px}
 li{margin:3.5px 0;line-height:1.45}
 li::marker{color:var(--accent);font-weight:700}
-strong,b{color:var(--ink-strong)}
+:where(.is-reader) strong,:where(.is-reader) b{color:var(--ink-strong)}
 em{color:inherit}
 .small,.fs13{font-size:13.5px}
 .mutedtx{color:var(--muted)}
