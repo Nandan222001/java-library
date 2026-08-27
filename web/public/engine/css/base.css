@@ -73,7 +73,14 @@ body.night{
   --ink:#dbcfb8; --ink-strong:#f6eedc; --muted:#a08f76;
   --card-border:#403a2c;
 }
-body{
+/* Scoped to .is-reader (set by Reader.jsx while the book is mounted): this
+   stylesheet is a static <link> loaded on EVERY route of the SPA, not just
+   the reader. An earlier unconditional `body{overflow:hidden}` here was
+   clipping scroll on every other page (Library/Pricing/Account/...) since
+   those pages rely on normal body scroll and have no inner scroll
+   container of their own -- content taller than the viewport was just
+   unreachable (users had to zoom out to see the rest of it). */
+body.is-reader{
   margin:0; overflow:hidden;
   font-family:'Crimson Pro',Georgia,'Times New Roman',serif;
   color:var(--ink);
