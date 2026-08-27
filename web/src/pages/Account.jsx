@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../lib/supabase.js';
 
@@ -34,7 +34,7 @@ export default function Account() {
           <input value={name} maxLength={60}
                  onChange={e => setName(e.target.value)}/>
         </label>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
           <button className="btn" onClick={save}>Save profile</button>
           {me && <span className={'chip ' +
               (me.profile.role === 'reader'
@@ -60,7 +60,7 @@ export default function Account() {
                 {sub.status !== 'active' &&
                   <p className="muted">Renewal canceled — access continues until expiry.</p>}
               </>}
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
           <Link2Pricing/>
           <Link className="btn ghost" to="/library">Library</Link>
           <button className="btn danger" style={{ marginLeft: 'auto' }}

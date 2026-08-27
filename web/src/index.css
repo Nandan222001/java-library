@@ -23,9 +23,13 @@ h1,h2,h3{font-family:'Playfair Display',serif;margin:.2em 0}
   backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
 .topnav .brand{font-family:'Playfair Display',serif;font-weight:900;font-size:19px;display:flex;gap:8px;align-items:center}
 .topnav .brand i{color:var(--gold);font-style:normal;font-weight:600;font-size:13px}
-.topnav nav{display:flex;gap:14px;margin-left:auto}
+.topnav nav{display:flex;align-items:center;gap:14px;margin-left:auto}
 .topnav nav a{padding:7px 12px;border-radius:10px;color:var(--ink-dim);transition:.15s}
 .topnav nav a:hover,.topnav nav a.active{color:#fff;background:#2a1a0e}
+.topnav .nav-toggle{display:none;margin-left:auto;width:38px;height:38px;flex:0 0 auto;
+  align-items:center;justify-content:center;background:transparent;border:1px solid var(--line);
+  border-radius:10px;color:var(--shell-ink);font-size:18px;line-height:1;cursor:pointer}
+.topnav .nav-toggle:hover{border-color:var(--accent)}
 .chip{font:700 10.5px 'Fira Code',monospace;letter-spacing:.08em;padding:3px 9px;border-radius:12px;text-transform:uppercase}
 .chip.premium{background:#ffd88f22;color:var(--gold);border:1px solid #c9a22766}
 .chip.free{background:#43a04722;color:#8fd694;border:1px solid #43a04744}
@@ -66,3 +70,29 @@ h1,h2,h3{font-family:'Playfair Display',serif;margin:.2em 0}
   border-top-color:var(--accent);animation:spin 0.9s linear infinite;margin:0 auto}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-block{display:flex;flex-direction:column;gap:16px;align-items:center;padding:80px 0;color:var(--ink-dim)}
+
+/* ---------- responsive (kept last so it wins the cascade) ---------- */
+@media (max-width:680px){
+  /* the nav row (brand + Library + Pricing + role chip + account link +
+     Sign out) has no room to fit on one line at phone widths -- items were
+     clipping off past the right edge, making Sign out unreachable. Collapse
+     it into a toggleable dropdown instead of cramming/hiding items. */
+  .topnav .nav-toggle{display:flex}
+  .topnav nav{position:fixed;top:62px;left:0;right:0;margin-left:0;z-index:99;
+    flex-direction:column;align-items:stretch;gap:2px;
+    background:linear-gradient(160deg,#2c1c10,#190f08);border-bottom:2px solid var(--line);
+    box-shadow:0 14px 34px #0009;padding:0 14px;max-height:0;overflow:hidden;
+    transition:max-height .25s ease,padding .25s ease}
+  .topnav nav.open{max-height:70vh;overflow-y:auto;padding:10px 14px 16px}
+  .topnav nav a{padding:12px 8px;border-bottom:1px solid #ffffff12;border-radius:6px}
+  .topnav nav .chip{align-self:flex-start;margin:8px 0 2px}
+  .topnav nav .btn{width:100%;margin-top:8px}
+
+  .container{padding:78px 16px 50px}
+  .auth-page{margin-top:24px;padding:24px}
+  h1{font-size:26px}
+}
+@media (max-width:420px){
+  .plan-card{padding:24px 18px}
+  .plan-card .price{font-size:34px}
+}
