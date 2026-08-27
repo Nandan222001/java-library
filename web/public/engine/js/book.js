@@ -99,17 +99,37 @@ function paintLeaf(i) {
 }
 function hydrateLeaf(i) {
   if (i < 0 || i >= N || hydrated[i]) return;
-  /* local mode & pre-filled spreads (TOC injects spread 1): render at once */
-  if (!REMOTE || (pages[2*i] && pages[2*i].html) || (pages[2*i+1] && pages[2*i+1].html)) {
-    hydrated[i] = true; paintLeaf(i); return;
-  }
+  /* Per-face hydration. A leaf's two faces belong to DIFFERENT spreads:
+       front/right page  = spread (i-1).right  (leaf0's front is the static cover)
+       back/left  page   = spread  i   .left
+     Old code fetched a whole single spread for the leaf and skipped it whenever
+     ANY face had html — so spread 0 (pages 1-2) was never fetched because it
+     shares its leaves with the cover and the locally-rendered TOC, leaving
+     pages 1-2 permanently blank in remote mode. We now fetch only the blank
+     face(s) from the correct spread, so TOC/cover are never overwritten. */
+  var fr = pages[2 * i], bk = pages[2 * i + 1];
+  var needFr = !!fr && !fr.raw && !fr.html;   /* front page empty → spread (i-1).right */
+  var needBk = !!bk && !bk.raw && !bk.html;   /* back  page empty → spread  i   .left   */
+  if (!needFr && !needBk) { hydrated[i] = true; paintLeaf(i); return; }
+
   hydrated[i] = 'pending';                    /* de-dupe until data lands */
-  SRC.requestSpread(i - 1).then(function (sp) {   /* leaf i front/back = spread i-1 */
-    if (!sp) { hydrated[i] = false; return; } /* failed → retry on next pass */
-    pages[2*i]     = { kicker: sp.l.kicker, head: sp.l.head, html: sp.l.html, num: 2*i };
-    pages[2*i + 1] = { kicker: sp.r.kicker, head: sp.r.head, html: sp.r.html, num: 2*i+1 };
-    hydrated[i] = true; paintLeaf(i);
-  }).catch(function () { hydrated[i] = false; });
+  var wants = [];
+  if (needFr) wants.push(i - 1);
+  if (needBk) wants.push(i);
+  Promise.all(wants.map(function (k) { return SRC.requestSpread(k); }))
+    .then(function (list) {
+      if (needFr) {
+        var a = list.shift();
+        if (a) { fr.kicker = a.r.kicker || ''; fr.head = a.r.head || ''; fr.html = a.r.html; }
+      }
+      if (needBk) {
+        var b = list.shift();
+        if (b) { bk.kicker = b.l.kicker || ''; bk.head = b.l.head || ''; bk.html = b.l.html; }
+      }
+      if ((fr && fr.html) || (bk && bk.html)) { hydrated[i] = true; paintLeaf(i); }
+      else hydrated[i] = false;               /* still empty → retry on next pass */
+    })
+    .catch(function () { hydrated[i] = false; });
 }
 var HYDRATE_RADIUS = 4;
 function ensureHydrated(center, radius) {
