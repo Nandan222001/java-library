@@ -113,35 +113,231 @@ r.post('/import', adminGate, async (req, res) => {
     tier: book.tier, published: book.published });
 });
 
-/* PATCH /api/admin/books/:id — flip published / tier */
-r.patch('/books/:id', async (req, res) => {
-  const secretOk = process.env.ADMIN_IMPORT_SECRET &&
-    req.get('x-admin-secret') === process.env.ADMIN_IMPORT_SECRET;
-  if (!secretOk)
-    return new Promise(() => requireAuth(req, res, () => {
-      if (req.profile?.role !== 'admin')
-        return res.status(403).json({ error: 'Admin only' });
-      apply();
-    }));
-  apply();
+/* GET /api/admin/books — every book regardless of published state, for
+ * the admin panel's book list (the public GET /api/books only returns
+ * published ones) */
+r.get('/books', adminGate, async (req, res) => {
+  const { data, error } = await admin.from('books')
+    .select('id,slug,title,subtitle,author,cover_emoji,tier,published,price_paise,created_at')
+    .order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
 
-  function apply() {
-    const patch = {};
-    if ('published' in req.body)
-      patch.published = !!req.body.published;
-    if ('tier' in req.body) {
-      if (!['free', 'premium'].includes(req.body.tier))
-        return res.status(400).json({ error: 'tier must be free|premium' });
-      patch.tier = req.body.tier;
+/* PATCH /api/admin/books/:id — edit book metadata (title/tier/price/
+ * cover/publish/...). Content (chapters/spreads) is intentionally out of
+ * scope here — that stays the CLI import script's job. */
+r.patch('/books/:id', adminGate, async (req, res) => {
+  const b = req.body || {};
+  const patch = {};
+  if ('title' in b) {
+    const v = str(b.title, 2, 200);
+    if (!v) return res.status(400).json({ error: 'title must be 2-200 chars' });
+    patch.title = v;
+  }
+  if ('subtitle' in b) patch.subtitle = String(b.subtitle ?? '').slice(0, 300);
+  if ('author' in b) patch.author = String(b.author ?? '').slice(0, 120);
+  if ('cover_emoji' in b) {
+    const v = str(b.cover_emoji, 1, 8);
+    if (!v) return res.status(400).json({ error: 'cover_emoji must be 1-8 chars' });
+    patch.cover_emoji = v;
+  }
+  if ('tier' in b) {
+    if (!['free', 'premium'].includes(b.tier))
+      return res.status(400).json({ error: 'tier must be free|premium' });
+    patch.tier = b.tier;
+  }
+  if ('price_paise' in b) {
+    const v = Number(b.price_paise);
+    if (!Number.isFinite(v) || v < 0)
+      return res.status(400).json({ error: 'price_paise must be >= 0' });
+    patch.price_paise = Math.round(v);
+  }
+  if ('published' in b) patch.published = !!b.published;
+  if (!Object.keys(patch).length)
+    return res.status(400).json({ error: 'Nothing to update' });
+  const { data, error } = await admin.from('books').update(patch)
+    .eq('id', req.params.id)
+    .select('id,slug,title,subtitle,author,cover_emoji,tier,published,price_paise')
+    .maybeSingle();
+  if (error) return res.status(400).json({ error: error.message });
+  if (!data) return res.status(404).json({ error: 'Book not found' });
+  res.json(data);
+});
+
+/* POST /api/admin/books/:slug/practice/import — full-replace a book's MCQ
+ * practice bank, same full-replace-per-slug semantics as POST /import. */
+r.post('/books/:slug/practice/import', adminGate, async (req, res) => {
+  const { data: book } = await admin.from('books')
+    .select('id,slug').eq('slug', req.params.slug).maybeSingle();
+  if (!book) return res.status(404).json({ error: 'Book not found' });
+
+  const questions = Array.isArray(req.body?.questions) ? req.body.questions : [];
+  if (!questions.length) return res.status(400).json({ error: 'questions[] empty' });
+  for (const q of questions) {
+    if (!str(q.question, 2, 2000))
+      return res.status(400).json({ error: 'Each question needs 2-2000 char question text' });
+    if (!Array.isArray(q.options) || q.options.length < 2 || q.options.some(o => typeof o !== 'string'))
+      return res.status(400).json({ error: 'Each question needs options[] (>= 2 strings)' });
+    if (!Number.isInteger(q.correct_index) || q.correct_index < 0 || q.correct_index >= q.options.length)
+      return res.status(400).json({ error: 'correct_index must index into options[]' });
+  }
+
+  const rows = questions.map(q => ({
+    book_id: book.id,
+    question: q.question,
+    options: q.options,
+    correct_index: q.correct_index,
+    explanation: String(q.explanation || ''),
+    difficulty: ['easy', 'medium', 'hard'].includes(q.difficulty) ? q.difficulty : 'medium'
+  }));
+
+  const chunk = (arr, n) => {
+    const out = [];
+    for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
+    return out;
+  };
+
+  try {
+    await admin.from('practice_questions').delete().eq('book_id', book.id);
+    for (const c of chunk(rows, 100)) {
+      const { error } = await admin.from('practice_questions').insert(c);
+      if (error) throw error;
     }
-    if (!Object.keys(patch).length)
+  } catch (err) {
+    return res.status(500).json({
+      error: err.message, partial: true,
+      note: 'Some questions may not have been inserted; re-run to repair.'
+    });
+  }
+
+  res.status(201).json({ ok: true, book_id: book.id, count: rows.length });
+});
+
+/* PATCH /api/admin/plans/:plan_id — edit a subscription plan */
+r.patch('/plans/:plan_id', adminGate, async (req, res) => {
+  const b = req.body || {};
+  const patch = {};
+  if ('name' in b) {
+    const v = str(b.name, 1, 100);
+    if (!v) return res.status(400).json({ error: 'name must be 1-100 chars' });
+    patch.name = v;
+  }
+  if ('price_paise' in b) {
+    const v = Number(b.price_paise);
+    if (!Number.isFinite(v) || v < 0)
+      return res.status(400).json({ error: 'price_paise must be >= 0' });
+    patch.price_paise = Math.round(v);
+  }
+  if ('interval_days' in b) {
+    const v = Number(b.interval_days);
+    if (!Number.isFinite(v) || v < 0)
+      return res.status(400).json({ error: 'interval_days must be >= 0' });
+    patch.interval_days = Math.round(v);
+  }
+  if ('features' in b) {
+    if (!Array.isArray(b.features) || !b.features.every(f => typeof f === 'string'))
+      return res.status(400).json({ error: 'features must be an array of strings' });
+    patch.features = b.features;
+  }
+  if (!Object.keys(patch).length)
+    return res.status(400).json({ error: 'Nothing to update' });
+  const { data, error } = await admin.from('plans').update(patch)
+    .eq('plan_id', req.params.plan_id).select().maybeSingle();
+  if (error) return res.status(400).json({ error: error.message });
+  if (!data) return res.status(404).json({ error: 'Plan not found' });
+  res.json(data);
+});
+
+/* GET /api/admin/users?q=&limit= — profiles + their current subscription */
+r.get('/users', adminGate, async (req, res) => {
+  const q = String(req.query.q || '').trim().replace(/[,()]/g, '');
+  const limit = Math.min(parseInt(req.query.limit, 10) || 50, 200);
+  let query = admin.from('profiles')
+    .select('id,email,display_name,role,created_at')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (q) query = query.or(`email.ilike.%${q}%,display_name.ilike.%${q}%`);
+  const { data: users, error } = await query;
+  if (error) return res.status(500).json({ error: error.message });
+
+  const ids = users.map(u => u.id);
+  const { data: subs } = ids.length
+    ? await admin.from('subscriptions')
+        .select('user_id,plan_id,status,current_end')
+        .in('user_id', ids).eq('status', 'active')
+        .gt('current_end', new Date().toISOString())
+    : { data: [] };
+  const subMap = new Map((subs || []).map(s => [s.user_id, s]));
+  res.json(users.map(u => ({ ...u, subscription: subMap.get(u.id) || null })));
+});
+
+/* PATCH /api/admin/users/:id — change role and/or grant/revoke premium.
+ * Two independent, optional actions in one request:
+ *   { role: 'reader'|'publisher'|'admin' }
+ *   { grant_premium: { plan_id, days? } }   (days overrides the plan's own interval)
+ *   { revoke_premium: true }                (immediate — unlike self-service
+ *                                             cancel, access ends NOW, not at
+ *                                             period end; for abuse handling) */
+r.patch('/users/:id', adminGate, async (req, res) => {
+  try {
+    const targetId = req.params.id;
+    const b = req.body || {};
+
+    if ('role' in b) {
+      if (!['reader', 'publisher', 'admin'].includes(b.role))
+        return res.status(400).json({ error: 'role must be reader|publisher|admin' });
+      if (b.role !== 'admin') {
+        const { data: target } = await admin.from('profiles')
+          .select('role').eq('id', targetId).maybeSingle();
+        if (target?.role === 'admin') {
+          const { count } = await admin.from('profiles')
+            .select('id', { count: 'exact', head: true }).eq('role', 'admin');
+          if ((count || 0) <= 1)
+            return res.status(400).json({ error: 'Cannot demote the last remaining admin' });
+        }
+      }
+      const { error } = await admin.from('profiles')
+        .update({ role: b.role }).eq('id', targetId);
+      if (error) return res.status(400).json({ error: error.message });
+    }
+
+    if (b.grant_premium) {
+      const planId = b.grant_premium.plan_id || 'premium_monthly';
+      const { data: plan } = await admin.from('plans')
+        .select('*').eq('plan_id', planId).maybeSingle();
+      if (!plan || plan.plan_id === 'free')
+        return res.status(400).json({ error: 'Unknown paid plan_id' });
+      const days = Number(b.grant_premium.days);
+      const durationDays = Number.isFinite(days) && days > 0 ? days : plan.interval_days;
+      const start = new Date();
+      const end = new Date(start.getTime() + durationDays * 24 * 60 * 60 * 1000);
+      await admin.from('subscriptions')
+        .update({ status: 'canceled', canceled_at: start.toISOString() })
+        .eq('user_id', targetId).eq('status', 'active');
+      const { error } = await admin.from('subscriptions').insert({
+        user_id: targetId, plan_id: plan.plan_id, status: 'active',
+        provider: 'sandbox',
+        provider_ref: `admin_grant_${Date.now().toString(36)}_${req.user?.id?.slice(0, 8) || 'secret'}`,
+        current_start: start.toISOString(), current_end: end.toISOString()
+      });
+      if (error) return res.status(400).json({ error: error.message });
+    }
+
+    if (b.revoke_premium) {
+      const now = new Date().toISOString();
+      const { error } = await admin.from('subscriptions')
+        .update({ status: 'canceled', canceled_at: now, current_end: now })
+        .eq('user_id', targetId).eq('status', 'active');
+      if (error) return res.status(400).json({ error: error.message });
+    }
+
+    if (!('role' in b) && !b.grant_premium && !b.revoke_premium)
       return res.status(400).json({ error: 'Nothing to update' });
-    admin.from('books').update(patch)
-      .eq('id', req.params.id)
-      .select('id,slug,tier,published').single()
-      .then(({ data, error }) => error
-        ? res.status(400).json({ error: error.message })
-        : res.json(data));
+
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message });
   }
 });
 

@@ -27,13 +27,22 @@ export async function entitlements(profile, admin) {
   return { staff, premium: !!sub, subscription: sub || null };
 }
 
-/** Re-fetch an entitled book row server-side; NEVER trust client input here. */
-export async function bookEntitlement(admin, entitlementsObj, bookId) {
+/** Re-fetch an entitled book row server-side; NEVER trust client input here.
+ *  Single source of truth for "can this user open this book" — covers
+ *  free tier, an active subscription, a one-time book purchase, AND staff
+ *  previewing an unpublished book. Look up by id (default) or by slug
+ *  (`{ bySlug: true }`, what every route actually has on hand). */
+export async function bookEntitlement(admin, userId, entitlementsObj, bookIdOrSlug, { bySlug = false } = {}) {
   const { data: book } = await admin.from('books')
-    .select('id,slug,title,tier,published')
-    .eq('id', bookId).single();
-  if (!book || !book.published) return { allowed: false, code: 404 };
-  const allowed =
-    book.tier === 'free' || entitlementsObj.premium;
-  return { allowed, code: allowed ? 200 : 402, book };
+    .select('id,slug,title,subtitle,author,cover_emoji,tier,published,price_paise')
+    .eq(bySlug ? 'slug' : 'id', bookIdOrSlug).maybeSingle();
+  if (!book) return { allowed: false, code: 404, book: null };
+  if (!book.published && !entitlementsObj.staff)
+    return { allowed: false, code: 404, book };
+  if (entitlementsObj.staff || book.tier === 'free' || entitlementsObj.premium)
+    return { allowed: true, code: 200, book };
+  const { data: purchase } = await admin.from('book_purchases')
+    .select('id').eq('book_id', book.id).eq('user_id', userId).maybeSingle();
+  if (purchase) return { allowed: true, code: 200, book };
+  return { allowed: false, code: 402, book };
 }

@@ -90,6 +90,52 @@ r.post('/checkout', async (req, res) => {
   });
 });
 
+/* POST /api/billing/purchase/:slug — one-time unlock for a single priced
+ * book. SANDBOX gateway, same idempotent shape as /checkout above: check
+ * for an existing purchase first, insert, and fall back to a re-select on
+ * a unique-constraint race (two tabs/a retry hitting this at once). */
+r.post('/purchase/:slug', async (req, res) => {
+  const { data: book } = await admin.from('books')
+    .select('id,slug,title,published,price_paise')
+    .eq('slug', req.params.slug).maybeSingle();
+  if (!book || !book.published) return res.status(404).json({ error: 'Book not found' });
+  if (!book.price_paise) return res.status(400).json({ error: 'This book is not sold individually' });
+
+  const uid = req.user.id;
+
+  const { data: current } = await admin.from('book_purchases')
+    .select('*').eq('user_id', uid).eq('book_id', book.id).maybeSingle();
+  if (current) return res.json({ idempotent: true, purchase: current });
+
+  let created;
+  try {
+    ({ data: created } = await admin.from('book_purchases').insert({
+      user_id: uid,
+      book_id: book.id,
+      price_paise_paid: book.price_paise,
+      provider: PROVIDER,
+      provider_ref: `${PROVIDER}_${Date.now().toString(36)}_${uid.slice(0, 8)}`
+    }).select().single());
+  } catch (err) {
+    const msg = err.message || '';
+    if (msg.includes('23505')) {                     // raced with another tab
+      const { data: again } = await admin.from('book_purchases')
+        .select('*').eq('user_id', uid).eq('book_id', book.id).maybeSingle();
+      return res.json({ idempotent: true, purchase: again });
+    }
+    return res.status(500).json({ error: msg });
+  }
+
+  console.log(`[BILLING] ${uid} bought "${book.slug}" for ₹${book.price_paise / 100} (${PROVIDER})`);
+  res.status(201).json({
+    purchase: created,
+    book: { slug: book.slug, title: book.title },
+    message: PROVIDER === 'sandbox'
+      ? 'Sandbox purchase — no card was charged.'
+      : 'Payment confirmed by gateway.'
+  });
+});
+
 /* POST /api/billing/cancel — access continues until current_end (no refunds) */
 r.post('/cancel', async (req, res) => {
   const { data: sub } = await admin.from('subscriptions')

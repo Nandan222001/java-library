@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
-import { entitlements } from '../middleware/rbac.js';
+import { entitlements, bookEntitlement } from '../middleware/rbac.js';
 import { admin } from '../lib/supabase.js';
 
 const r = Router();
@@ -26,19 +26,22 @@ async function loadBook(slug) {
 /* GET /api/books — catalog grid with lock badges + resume position */
 r.get('/', async (req, res) => {
   const e = await entitlements(req.profile, admin);
-  const [{ data: books, error }, { data: prog }] = await Promise.all([
+  const [{ data: books, error }, { data: prog }, { data: purchases }] = await Promise.all([
     admin.from('books').select(
-      'id,slug,title,subtitle,author,cover_emoji,tier,published')
+      'id,slug,title,subtitle,author,cover_emoji,tier,published,price_paise')
       .eq('published', true).order('created_at'),
     admin.from('reading_progress')
-      .select('book_id,flips').eq('user_id', req.user.id)
+      .select('book_id,flips').eq('user_id', req.user.id),
+    admin.from('book_purchases').select('book_id').eq('user_id', req.user.id)
   ]);
   if (error) return res.status(500).json({ error: error.message });
-  const map = new Map((prog || []).map(p => [p.book_id, p.flips]));
+  const progMap = new Map((prog || []).map(p => [p.book_id, p.flips]));
+  const purchasedSet = new Set((purchases || []).map(p => p.book_id));
   res.json(books.map(b => ({
     ...b,
-    locked: b.tier === 'premium' && !ent(e).premium,
-    continue_flips: map.get(b.id) ?? null,
+    locked: b.tier === 'premium' && !ent(e).premium && !purchasedSet.has(b.id),
+    purchased: purchasedSet.has(b.id),
+    continue_flips: progMap.get(b.id) ?? null,
     pages: null                                  // filled lazily on open
   })));
 });
@@ -46,11 +49,11 @@ r.get('/', async (req, res) => {
 /* GET /api/books/:slug/meta — everything the reader shell needs pre-open */
 r.get('/:slug/meta', async (req, res) => {
   try {
-    const book = await loadBook(req.params.slug);
     const e = await entitlements(req.profile, admin);
-    const staff = e.staff;
-    if (!book.published && !staff) return res.status(404).json({ error: 'Not found' });
-    const canRead = book.tier === 'free' || e.premium || staff;
+    const { allowed, code, book } = await bookEntitlement(
+      admin, req.user.id, e, req.params.slug, { bySlug: true });
+    if (!book) return res.status(404).json({ error: 'Not found' });
+    if (code === 404) return res.status(404).json({ error: 'Not found' });
     const [{ data: parts }, { data: chapters }, { data: prog }] = await Promise.all([
       admin.from('book_parts').select('part_id,label,color,ord')
            .eq('book_id', book.id).order('ord'),
@@ -62,11 +65,10 @@ r.get('/:slug/meta', async (req, res) => {
     res.json({
       book: { slug: book.slug, title: book.title, subtitle: book.subtitle,
               author: book.author, cover_emoji: book.cover_emoji,
-              tier: book.tier },
+              tier: book.tier, price_paise: book.price_paise },
       parts, chapters,
-      spread_count: book.tier === 'premium' && !canRead ? null : undefined,
-      can_read: canRead,
-      locked: !canRead,
+      can_read: allowed,
+      locked: !allowed,
       continue_flips: prog?.flips ?? 0
     });
   } catch (err) {
@@ -77,15 +79,14 @@ r.get('/:slug/meta', async (req, res) => {
 /* GET /api/books/:slug/spreads/:idx — ONE spread; server-side paywall */
 r.get('/:slug/spreads/:idx(\\d+)', async (req, res) => {
   try {
-    const book = await loadBook(req.params.slug);
     const idx = parseInt(req.params.idx, 10);
     const e = await entitlements(req.profile, admin);
-    const canRead = book.published &&
-      (book.tier === 'free' || e.premium);
-    if (!book.published && !e.staff) return res.status(404).json({ error: 'Not found' });
-    if (!canRead) return res.status(402).json({
+    const { allowed, code, book } = await bookEntitlement(
+      admin, req.user.id, e, req.params.slug, { bySlug: true });
+    if (!book || code === 404) return res.status(404).json({ error: 'Not found' });
+    if (!allowed) return res.status(402).json({
       error: 'subscription_required',
-      message: 'This book needs an active Premium subscription.'
+      message: 'This book needs an active Premium subscription (or purchase).'
     });
     const { data, error } = await admin.from('spreads')
       .select('idx,l_kicker,l_head,l_html,r_kicker,r_head,r_html')
@@ -103,11 +104,11 @@ r.get('/:slug/search', async (req, res) => {
   try {
     const q = String(req.query.q || '').trim();
     if (q.length < 2) return res.json([]);
-    const book = await loadBook(req.params.slug);
     const e = await entitlements(req.profile, admin);
-    if (!book.published) return res.status(404).json({ error: 'Not found' });
-    if (!(book.tier === 'free' || e.premium))
-      return res.status(402).json({ error: 'subscription_required' });
+    const { allowed, code, book } = await bookEntitlement(
+      admin, req.user.id, e, req.params.slug, { bySlug: true });
+    if (!book || code === 404) return res.status(404).json({ error: 'Not found' });
+    if (!allowed) return res.status(402).json({ error: 'subscription_required' });
     const { data, error } = await admin.rpc('search_spread_content',
       { p_book: book.id, q, lim: 22 });
     if (error) return res.status(500).json({ error: error.message });

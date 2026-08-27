@@ -5,6 +5,8 @@ import meRoutes from './routes/me.js';
 import libraryRoutes from './routes/library.js';
 import billingRoutes from './routes/billing.js';
 import adminRoutes from './routes/admin.js';
+import practiceRoutes from './routes/practice.js';
+import gamificationRoutes from './routes/gamification.js';
 
 /** Build the Express app WITHOUT binding a port. Exporting `app` lets Vercel
  *  wrap it as a serverless function while `index.js` (local dev) calls listen. */
@@ -40,8 +42,10 @@ export function buildApp() {
 
   app.use('/api', meRoutes);
   app.use('/api/books', libraryRoutes);
+  app.use('/api/books', practiceRoutes);
   app.use('/api/billing', billingRoutes);
   app.use('/api/admin', adminRoutes);
+  app.use('/api/gamification', gamificationRoutes);
 
   app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
 

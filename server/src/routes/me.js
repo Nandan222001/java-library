@@ -8,6 +8,14 @@ const r = Router();
 /* GET /api/me — everything the UI needs about the signed-in reader */
 r.get('/me', requireAuth, async (req, res) => {
   const ent = await entitlements(req.profile, admin);
+  const [{ data: stats }, { data: badgeRows }] = await Promise.all([
+    admin.from('player_stats')
+      .select('points,current_streak,longest_streak')
+      .eq('user_id', req.user.id).maybeSingle(),
+    admin.from('user_badges')
+      .select('badge_id,awarded_at,badges(label,description,icon)')
+      .eq('user_id', req.user.id).order('awarded_at', { ascending: false })
+  ]);
   res.json({
     user:   { id: req.user.id, email: req.user.email },
     profile: {
@@ -15,7 +23,13 @@ r.get('/me', requireAuth, async (req, res) => {
       display_name: req.profile.display_name
     },
     subscription: ent.subscription,
-    entitlements: { staff: ent.staff, premium: ent.premium }
+    entitlements: { staff: ent.staff, premium: ent.premium },
+    points: stats?.points ?? 0,
+    current_streak: stats?.current_streak ?? 0,
+    longest_streak: stats?.longest_streak ?? 0,
+    badges: (badgeRows || []).map(b => ({
+      id: b.badge_id, awarded_at: b.awarded_at, ...b.badges
+    }))
   });
 });
 
