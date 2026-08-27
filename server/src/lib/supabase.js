@@ -1,24 +1,66 @@
 import { createClient } from '@supabase/supabase-js';
-import 'dotenv/config';
 
-if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.error('Missing SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY in environment.');
-  process.exit(1);
+/* On serverless (Vercel) there is no .env for dotenv to read; env values come
+ * from the platform. A missing/malformed config must NOT crash the function at
+ * import time (that surfaces as a generic 500 / FUNCTION_INVOCATION_FAILED).
+ * `admin` is a lazy Proxy: it only builds the service-role client on first
+ * use, and a config error is thrown at request time — surfacing a readable
+ * message instead of an opaque serverless crash. Existing call sites like
+ * `admin.from(...)` / `admin.auth...` work unchanged. */
+
+function configErr(msg) {
+  const e = new Error(msg);
+  e.config = true;
+  return e;
 }
 
-/** Service-role client: BYPASSES RLS — reserve for trusted server paths
+const configured = () => {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw configErr(
+    'Server misconfigured: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY ' +
+    'must be set in the Vercel project environment.');
+  let parsed;
+  try { parsed = new URL(url); } catch { throw configErr(
+    `SUPABASE_URL is not a valid URL: "${url}"`); }
+  if (!/^https?:$/.test(parsed.protocol)) throw configErr(
+    `SUPABASE_URL must be http(s), got protocol "${parsed.protocol}"`);
+  return { url, key };
+};
+
+let _client = null;
+let _err = null;
+function real() {
+  if (_client) return _client;
+  if (_err) throw _err;
+  try {
+    const { url, key } = configured();
+    _client = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
+    return _client;
+  } catch (err) {
+    _err = err;
+    throw err;
+  }
+}
+
+/** Service-role client (lazy): BYPASSES RLS — reserve for trusted server paths
  *  (admin imports, billing activation). Every end-user-facing query MUST
  *  carry explicit entitlement checks; prefer the user-token client there. */
-export const admin = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  { auth: { persistSession: false, autoRefreshToken: false } }
-);
+export const admin = new Proxy({}, {
+  get(_t, prop) {
+    const c = real();
+    const v = c[prop];
+    return typeof v === 'function' ? v.bind(c) : v;
+  }
+});
 
 /** Build a per-request client bound to the caller's JWT so Postgres RLS
  *  evaluates with the REAL user identity — defence in depth. */
 export function userClient(jwt) {
-  return createClient(process.env.SUPABASE_URL, jwt, {
+  const { url } = configured();
+  return createClient(url, jwt, {
     auth: { persistSession: false, autoRefreshToken: false }
   });
 }
