@@ -40,6 +40,7 @@ if (typeof globalThis.WebSocket === 'undefined') {
 function configErr(msg) {
   const e = new Error(msg);
   e.config = true;
+  e.status = 500;
   return e;
 }
 
@@ -86,10 +87,24 @@ export const admin = new Proxy({}, {
 });
 
 /** Build a per-request client bound to the caller's JWT so Postgres RLS
- *  evaluates with the REAL user identity — defence in depth. */
+ *  evaluates with the REAL user identity — defence in depth.
+ *
+ *  NOTE: the second createClient() arg is the project's `apikey` (validated
+ *  by the Supabase gateway), NOT a substitute for the caller's auth token —
+ *  those are two different headers. Supabase's new key format (`sb_publishable_…`)
+ *  is an opaque project key, not a JWT, so a user's Auth JWT can no longer
+ *  double as it (that only ever worked by coincidence on the legacy
+ *  JWT-format anon key, where both were signed with the same secret). We
+ *  send the publishable key as `apikey` and layer the caller's JWT on top
+ *  via the Authorization header so Postgres RLS still evaluates as them. */
 export function userClient(jwt) {
   const { url } = configured();
-  return createClient(url, jwt, {
+  const anonKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+  if (!anonKey) throw configErr(
+    'Server misconfigured: SUPABASE_PUBLISHABLE_KEY must be set in the ' +
+    'Vercel project environment (Settings → API → Publishable key).');
+  return createClient(url, anonKey, {
+    global: { headers: { Authorization: `Bearer ${jwt}` } },
     auth: { persistSession: false, autoRefreshToken: false }
   });
 }

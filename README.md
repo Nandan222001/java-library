@@ -33,7 +33,7 @@ Dashboard → SQL Editor → paste & RUN `supabase/schema.sql`.
 ## 2 · Server
 ```bash
 cd server
-cp .env.example .env          # paste SUPABASE_SERVICE_ROLE_KEY (Settings→API)
+cp .env.example .env          # paste SUPABASE_SERVICE_ROLE_KEY + SUPABASE_PUBLISHABLE_KEY (Settings→API)
 npm install
 npm run dev                   # → http://localhost:8080
 ```
@@ -94,6 +94,7 @@ The repo is a monorepo; create **two Vercel projects**, both pointing at this re
 |---|---|
 | `SUPABASE_URL` | `https://xddhhybyviuntnnymfbo.supabase.co` |
 | `SUPABASE_SERVICE_ROLE_KEY` | your **service-role** key (Settings → API) |
+| `SUPABASE_PUBLISHABLE_KEY` | same **publishable** key as `web`'s `VITE_SUPABASE_PUBLISHABLE_KEY` — needed as the `apikey` header for the per-request user-token client (progress sync, profile rename) |
 | `CLIENT_ORIGIN` | your deployed web origin, e.g. `https://your-web-app.vercel.app` |
 | `ADMIN_IMPORT_SECRET` | a long random string (ops import endpoint) |
 | `BILLING_PROVIDER` | `sandbox` (or switch to Stripe/Razorpay later) |
