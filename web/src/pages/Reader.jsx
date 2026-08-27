@@ -17,6 +17,7 @@ export default function Reader() {
   useEffect(() => {
     let dead = false;
     let syncTimer = null;
+    document.body.classList.add('is-reader');   // let engine/css/base.css own <body>
 
     mountReader(host.current, {
       slug,
@@ -41,6 +42,7 @@ export default function Reader() {
       clearInterval(syncTimer);
       try { window.READER?.flush?.(); } catch {}
       if (host.current) host.current.innerHTML = '';
+      document.body.classList.remove('is-reader');
       refreshMe?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

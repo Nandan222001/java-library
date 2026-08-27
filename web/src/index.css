@@ -4,7 +4,14 @@
   --gold:#c9a227; --green:#43a047; --red:#ef5350;
 }
 *{box-sizing:border-box}
-body{margin:0;background:
+/* :not(.is-reader) — while the flip-book engine owns the page (Reader.jsx
+   tags <body class="is-reader">), its own engine/css/base.css body{} rule
+   must govern background/color/font. Both stylesheets target the bare
+   `body` selector at equal specificity, and this one loads after the
+   engine's static <link> tags, so without this guard it always won —
+   overriding the engine's reading-ink with the shell's much lighter one and
+   making page text nearly invisible on the paper background. */
+body:not(.is-reader){margin:0;background:
   radial-gradient(120% 80% at 20% 0%,#241509 0%,transparent 60%),
   radial-gradient(120% 90% at 90% 100%,#1c1207 0%,transparent 55%),var(--bg);
   color:var(--shell-ink);font:16px/1.55 'Crimson Pro',serif;min-height:100vh}
