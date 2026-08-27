@@ -83,7 +83,9 @@ export async function mountReader(container, { slug, startFlips = 0 }) {
         order: meta.parts.sort((a, b) => a.ord - b.ord).map(p => p.part_id),
         chapters: meta.chapters.map(c =>
           ({ partId: c.part_id, num: c.num, title: c.title, idx: c.idx })),
-        spreads: Array.from({ length: S }, () => ({ left: null, right: null })),
+        spreads: Array.from({ length: S },
+          () => ({ left: { kicker: '', head: '', html: '' },
+                   right: { kicker: '', head: '', html: '' } })),
         part() {}, chapter() {}, spread() {}
       };
       window.BOOK = BK;
