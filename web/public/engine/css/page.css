@@ -179,6 +179,7 @@ body.night .da{fill:#c9a06a}
 .cov-title em{display:block;font-size:24px;letter-spacing:.12em;color:#d8b45e;font-style:normal;margin-top:8px}
 .cov-sub{font:italic 600 18px 'Crimson Pro',serif;color:#dcc79a;margin:14px 0 6px;max-width:420px}
 .cov-cup{width:118px;height:auto;filter:drop-shadow(0 12px 20px rgba(0,0,0,.8));margin-top:6px}
+.cov-emoji{font-size:96px;line-height:1;margin-top:6px;filter:drop-shadow(0 12px 20px rgba(0,0,0,.8))}
 .cov-line{width:230px;height:2px;background:linear-gradient(90deg,transparent,#c9a227,transparent);margin:18px 0 14px}
 .cov-foot{position:absolute;bottom:36px;left:0;right:0;text-align:center;font:600 11.5px 'Fira Code',monospace;
   letter-spacing:.3em;color:#b08d4a;text-transform:uppercase}

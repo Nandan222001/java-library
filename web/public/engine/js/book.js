@@ -7,32 +7,34 @@ var bookEl = $('#book'), wrapEl = $('#bookWrap'), panEl = $('#bookPan');
 var SRC = window.BOOK_SRC || null;
 var REMOTE = !!(SRC && SRC.remote);   /* true → spread HTML streams from Supabase */
 
-/* ---------------- cover & back cover ---------------- */
+/* ---------------- cover & back cover ----------------
+ * These used to be hardcoded to the original Java book's own title/emoji/
+ * blurb -- harmless while it was the only book on the platform, but every
+ * OTHER book's reader would show "JAVA ZERO → FAANG" on its own cover
+ * once a second book existed. Built from window.BOOK's own metadata
+ * instead (set by engineLoader.js from the book's real title/subtitle/
+ * cover_emoji), with HL.escape() since book titles/subtitles are
+ * admin-authored content, not baked-in trusted strings. */
+var BOOK_TITLE = BOOK.title || 'Untitled Book';
+var BOOK_SUBTITLE = BOOK.subtitle || '';
+var BOOK_EMOJI = BOOK.cover_emoji || '📖';
+var titleParts = BOOK_TITLE.split(' · ');
+var coverTitleHtml = HL.escape(titleParts[0]) +
+  (titleParts.length > 1 ? '<em>' + HL.escape(titleParts.slice(1).join(' · ')) + '</em>' : '');
+
 var COVER = { raw: true, cls: 'cover', html:
   '<div class="cov-edition">FIRST EDITION</div>' +
-  '<svg class="cov-cup" viewBox="0 0 120 120" aria-hidden="true">' +
-    '<g stroke="#c9a227" stroke-width="4" stroke-linecap="round" fill="none">' +
-      '<path d="M32 54 h46 v20 a17 17 0 0 1 -17 17 h-12 a17 17 0 0 1 -17 -17 z" fill="#241206"/>' +
-      '<path d="M78 58 c15 0 15 17 0 17"/>' +
-      '<path d="M26 98 h58"/>' +
-      '<path d="M45 42 c-5 -8 6 -11 2 -19" opacity=".85"/>' +
-      '<path d="M57 41 c-5 -8 6 -11 2 -19"/>' +
-      '<path d="M69 42 c-5 -8 6 -11 2 -19" opacity=".65"/>' +
-    '</g></svg>' +
-  '<h1 class="cov-title">JAVA<em>ZERO&nbsp;&nbsp;→&nbsp;&nbsp;FAANG</em></h1>' +
-  '<p class="cov-sub">The complete interview book — Core · OOP · Collections · Streams · Threads · JVM · SOLID · Patterns · LLD · Spring Boot · Microservices · SQL · HLD · Docker · Kubernetes · Cloud</p>' +
+  '<div class="cov-emoji" aria-hidden="true">' + BOOK_EMOJI + '</div>' +
+  '<h1 class="cov-title">' + coverTitleHtml + '</h1>' +
+  '<p class="cov-sub">' + HL.escape(BOOK_SUBTITLE) + '</p>' +
   '<div class="cov-line"></div>' +
   '<p class="cov-sub" style="font-size:13px;letter-spacing:.34em;font-style:normal;color:#b08d4a;margin-top:0">THEORY LEFT &nbsp;·&nbsp; VISUALS RIGHT</p>' };
 
 var BACKCOV = { raw: true, cls: 'backcov', html:
-  '<svg viewBox="0 0 120 120" style="width:84px;filter:drop-shadow(0 8px 16px #000a)" aria-hidden="true">' +
-    '<g stroke="#c9a227" stroke-width="4" stroke-linecap="round" fill="none">' +
-      '<path d="M32 54 h46 v20 a17 17 0 0 1 -17 17 h-12 a17 17 0 0 1 -17 -17 z" fill="#241206"/>' +
-      '<path d="M78 58 c15 0 15 17 0 17"/><path d="M26 98 h58"/>' +
-      '<path d="M57 41 c-5 -8 6 -11 2 -19"/></g></svg>' +
-  '<p class="bc-blurb" style="margin-top:18px"><b>One book.</b> Every Java interview topic — from your first <b>public static void main</b> to designing <b>Uber’s backend</b>. Theory on the left, pictures on the right, zero fluff.</p>' +
-  '<p class="bc-blurb" style="font-size:14px">“Any fool can write code that a computer can understand. Good programmers write code that humans can understand.”<br><b style="font-size:13px;letter-spacing:.1em">— MARTIN FOWLER</b></p>' +
-  '<div class="bc-barcode"></div><div class="bc-price">₹ 0 · FREE FOREVER · SHARE WIDELY</div>' };
+  '<div class="cov-emoji" style="font-size:56px" aria-hidden="true">' + BOOK_EMOJI + '</div>' +
+  '<p class="bc-blurb" style="margin-top:18px"><b>' + HL.escape(BOOK_TITLE) + '.</b> ' +
+    HL.escape(BOOK_SUBTITLE) + ' Theory on the left, visuals on the right, zero fluff.</p>' +
+  '<div class="bc-barcode"></div><div class="bc-price">HAPPY LEARNING · SHARE WIDELY</div>' };
 
 /* ---------------- table of contents ---------------- */
 (function buildToc() {

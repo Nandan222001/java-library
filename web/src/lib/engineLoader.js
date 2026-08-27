@@ -22,7 +22,7 @@ export async function mountReader(container, { slug, startFlips = 0 }) {
   container.innerHTML = `
     <div id="loader" style="display:none"></div>
     <header id="toolbar">
-      <div class="tb-brand"><span class="logo">☕</span><b>Java</b><i>·Zero→FAANG</i></div>
+      <div class="tb-brand"><span class="logo">📖</span><b></b><i></i></div>
       <div class="tb-search">
         <input id="searchBox" type="text" placeholder="Search this book…  ( / )" autocomplete="off">
         <div id="searchResults" hidden></div>
@@ -80,6 +80,8 @@ export async function mountReader(container, { slug, startFlips = 0 }) {
         parts[p.part_id] = { id: p.part_id, label: p.label, color: p.color };
       });
       const BK = {
+        title: meta.book.title, subtitle: meta.book.subtitle,
+        author: meta.book.author, cover_emoji: meta.book.cover_emoji,
         parts,
         order: meta.parts.sort((a, b) => a.ord - b.ord).map(p => p.part_id),
         chapters: meta.chapters.map(c =>
@@ -122,6 +124,14 @@ export async function mountReader(container, { slug, startFlips = 0 }) {
   // the closure `meta` below, returned to the Reader page). If meta can't be
   // fetched (401/402/network), reject here so we never inject a broken engine.
   await window.BOOK_SRC.init();
+
+  // The toolbar brand was hardcoded to "☕ Java ·Zero→FAANG" until this fix —
+  // harmless for a single-book app, but every OTHER book's reader showed the
+  // Java book's own name/emoji in its header once a second book existed.
+  const brandLogo = container.querySelector('.tb-brand .logo');
+  const brandB = container.querySelector('.tb-brand b');
+  if (brandLogo) brandLogo.textContent = meta.book.cover_emoji || '📖';
+  if (brandB) brandB.textContent = meta.book.title || '';
 
   await injectScript('/engine/js/sound.js?v=6');
   await injectScript('/engine/js/highlight.js?v=6');
