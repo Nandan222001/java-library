@@ -21,6 +21,23 @@ export function buildApp() {
 
   app.get('/api/health', (_req, res) => res.json({ ok: true, ts: Date.now() }));
 
+  /* Connection test — exercises the service key + a REAL tables query so a
+   * deploy is self-verifying: proves env vars are set AND the DB/schema exist. */
+  app.get('/api/dbcheck', async (_req, res) => {
+    try {
+      const { admin } = await import('./lib/supabase.js');
+      const { error } = await admin.from('books').select('id').limit(1);
+      res.json({
+        ok: !error,
+        service_key_set: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+        query_error: error?.message || null,
+        note: error ? 'DB read failed — check key + schema.sql applied' : 'DB reachable via service key'
+      });
+    } catch (err) {
+      res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
   app.use('/api', meRoutes);
   app.use('/api/books', libraryRoutes);
   app.use('/api/billing', billingRoutes);
