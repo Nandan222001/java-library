@@ -1,5 +1,34 @@
 import { createClient } from '@supabase/supabase-js';
 
+/* ---- WebSocket shim for Node runtimes < 22 (e.g. Vercel serverless) ----
+ * supabase-js eagerly resolves a WebSocket constructor when it builds its
+ * Realtime client (that happens inside createClient). Node < 22 has no
+ * global WebSocket, so EVERY createClient call 500'd on Vercel
+ * ("Node.js detected but native WebSocket not found"). This API never uses
+ * Realtime — there is no .channel()/.subscribe() anywhere — so we only need
+ * the constructor to EXIST for the factory check to pass. It is never
+ * instantiated; if it ever is (someone adds realtime), it errors loudly
+ * instead of crashing opaquely. Node 22+ has the real global and this is a
+ * no-op there. */
+if (typeof globalThis.WebSocket === 'undefined') {
+  const WebSocketShim = class WebSocket {
+    static get CONNECTING() { return 0; }
+    static get OPEN() { return 1; }
+    static get CLOSING() { return 2; }
+    static get CLOSED() { return 3; }
+    constructor() {
+      throw new Error(
+        'Realtime WebSocket is not used by this server. If you add ' +
+        'realtime subscriptions, deploy on Node 22+.');
+    }
+  };
+  Object.defineProperties(WebSocketShim.prototype, {
+    CONNECTING: { value: 0 }, OPEN: { value: 1 },
+    CLOSING: { value: 2 }, CLOSED: { value: 3 }
+  });
+  globalThis.WebSocket = WebSocketShim;
+}
+
 /* On serverless (Vercel) there is no .env for dotenv to read; env values come
  * from the platform. A missing/malformed config must NOT crash the function at
  * import time (that surfaces as a generic 500 / FUNCTION_INVOCATION_FAILED).
