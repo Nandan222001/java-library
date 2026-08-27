@@ -96,16 +96,41 @@ export const admin = new Proxy({}, {
  *  double as it (that only ever worked by coincidence on the legacy
  *  JWT-format anon key, where both were signed with the same secret). We
  *  send the publishable key as `apikey` and layer the caller's JWT on top
- *  via the Authorization header so Postgres RLS still evaluates as them. */
+ *  via the Authorization header so Postgres RLS still evaluates as them.
+ *
+ *  Lazy, same as `admin` above: requireAuth() builds one of these on EVERY
+ *  authenticated request regardless of whether the route ever touches it
+ *  (most routes only read via the service-role `admin` client). Building it
+ *  eagerly would mean a missing SUPABASE_PUBLISHABLE_KEY 500s every signed-in
+ *  request — including plain reads that never needed it — instead of only
+ *  the writes (progress sync, profile rename) that actually use req.sb. */
 export function userClient(jwt) {
-  const { url } = configured();
-  const anonKey = process.env.SUPABASE_PUBLISHABLE_KEY;
-  if (!anonKey) throw configErr(
-    'Server misconfigured: SUPABASE_PUBLISHABLE_KEY must be set in the ' +
-    'Vercel project environment (Settings → API → Publishable key).');
-  return createClient(url, anonKey, {
-    global: { headers: { Authorization: `Bearer ${jwt}` } },
-    auth: { persistSession: false, autoRefreshToken: false }
+  let client = null, err = null;
+  function build() {
+    if (client) return client;
+    if (err) throw err;
+    try {
+      const { url } = configured();
+      const anonKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+      if (!anonKey) throw configErr(
+        'Server misconfigured: SUPABASE_PUBLISHABLE_KEY must be set in the ' +
+        'Vercel project environment (Settings → API → Publishable key).');
+      client = createClient(url, anonKey, {
+        global: { headers: { Authorization: `Bearer ${jwt}` } },
+        auth: { persistSession: false, autoRefreshToken: false }
+      });
+      return client;
+    } catch (e) {
+      err = e;
+      throw e;
+    }
+  }
+  return new Proxy({}, {
+    get(_t, prop) {
+      const c = build();
+      const v = c[prop];
+      return typeof v === 'function' ? v.bind(c) : v;
+    }
   });
 }
 

@@ -22,15 +22,19 @@ r.get('/me', requireAuth, async (req, res) => {
 /* PATCH /api/me — rename yourself. Executed WITH THE USER'S TOKEN so Postgres
  * RLS (profiles_update policy) authorises the write — server never overreaches. */
 r.patch('/me', requireAuth, async (req, res) => {
-  const name = String(req.body?.display_name ?? '').trim();
-  if (name.length < 2 || name.length > 60)
-    return res.status(400).json({ error: 'Display name must be 2–60 characters' });
-  const { error } = await req.sb
-    .from('profiles')
-    .update({ display_name: name })
-    .eq('id', req.user.id);
-  if (error) return res.status(400).json({ error: error.message });
-  res.json({ ok: true, display_name: name });
+  try {
+    const name = String(req.body?.display_name ?? '').trim();
+    if (name.length < 2 || name.length > 60)
+      return res.status(400).json({ error: 'Display name must be 2–60 characters' });
+    const { error } = await req.sb
+      .from('profiles')
+      .update({ display_name: name })
+      .eq('id', req.user.id);
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ ok: true, display_name: name });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message });
+  }
 });
 
 export default r;
