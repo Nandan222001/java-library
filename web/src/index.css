@@ -70,6 +70,49 @@ h1,h2,h3{font-family:'Playfair Display',serif;margin:.2em 0}
   border-top-color:var(--accent);animation:spin 0.9s linear infinite;margin:0 auto}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-block{display:flex;flex-direction:column;gap:16px;align-items:center;padding:80px 0;color:var(--ink-dim)}
+.pillrow{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+
+/* ---------- admin panel ---------- */
+.admin-tabs{display:flex;gap:8px;margin:18px 0 20px}
+.admin-tab{font:600 14px 'Crimson Pro',serif;padding:9px 18px;border-radius:12px;border:1px solid var(--line);
+  background:transparent;color:var(--ink-dim);cursor:pointer;transition:.15s}
+.admin-tab:hover{border-color:var(--accent);color:var(--shell-ink)}
+.admin-tab.active{background:var(--panel2);color:#fff;border-color:var(--accent)}
+.admin-table{display:flex;flex-direction:column;gap:14px}
+.admin-row{display:flex;flex-direction:column;gap:12px}
+.admin-row-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.admin-row .field{margin:0}
+.checkbox-field{display:flex!important;align-items:center;gap:8px;flex-direction:row-reverse;justify-content:flex-end}
+.checkbox-field input{width:auto!important}
+.admin-features{display:flex;flex-direction:column;gap:6px}
+.admin-features input{padding:8px 12px;border-radius:10px;border:1px solid var(--line);
+  background:#150d07;color:var(--shell-ink);font:14px 'Crimson Pro',serif}
+.admin-search{display:flex;gap:10px;margin:18px 0}
+.admin-search input{flex:1;padding:10px 14px;border-radius:12px;border:1px solid var(--line);
+  background:#150d07;color:var(--shell-ink);font:15px 'Crimson Pro',serif;outline:none}
+.admin-user-row{flex-direction:row;flex-wrap:wrap;align-items:center;gap:14px}
+.admin-user-row>div:first-child{flex:1;min-width:180px}
+.admin-user-row select{padding:8px 10px;border-radius:10px;border:1px solid var(--line);
+  background:#150d07;color:var(--shell-ink);font:14px 'Crimson Pro',serif}
+
+/* ---------- practice quizzes ---------- */
+.practice-q{margin-bottom:16px}
+.practice-q-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.practice-options{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.practice-opt{text-align:left;padding:11px 16px;border-radius:12px;border:1px solid var(--line);
+  background:#150d07;color:var(--shell-ink);cursor:pointer;font:15px 'Crimson Pro',serif;transition:.15s}
+.practice-opt:hover:not(:disabled){border-color:var(--accent)}
+.practice-opt.selected{border-color:var(--accent);background:var(--accent-soft)}
+.practice-opt.correct{border-color:var(--green);background:#43a04722;color:#bfe8c4}
+.practice-opt.wrong{border-color:var(--red);background:#ef535022;color:#ffb0b0}
+.practice-opt:disabled{cursor:default}
+
+/* ---------- leaderboard ---------- */
+.leaderboard-row{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line)}
+.leaderboard-row:last-child{border-bottom:none}
+.leaderboard-rank{font:700 14px 'Fira Code',monospace;color:var(--gold);min-width:34px}
+.leaderboard-name{flex:1;font-weight:600}
+.leaderboard-points{font:700 14px 'Fira Code',monospace;color:var(--accent)}
 
 /* ---------- responsive (kept last so it wins the cascade) ---------- */
 @media (max-width:680px){

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function TopNav() {
@@ -26,11 +26,15 @@ export default function TopNav() {
         {open ? '✕' : '☰'}
       </button>
       <nav className={open ? 'open' : ''}>
-        <Link to="/library" end>Library</Link>
-        <Link to="/pricing" >Pricing</Link>
+        {/* NavLink (not Link) so `end` and the .active CSS highlight
+            actually work -- both were previously no-ops on a plain Link */}
+        <NavLink to="/library" end>Library</NavLink>
+        <NavLink to="/pricing">Pricing</NavLink>
+        {user && <NavLink to="/leaderboard">Leaderboard</NavLink>}
+        {me?.profile?.role === 'admin' && <NavLink to="/admin">Admin</NavLink>}
         {user && <>
           {chip}
-          <Link to="/account">{me?.profile?.display_name || user.email}</Link>
+          <NavLink to="/account">{me?.profile?.display_name || user.email}</NavLink>
           <button className="btn ghost"
                   onClick={async () => { await signOut(); nav('/login'); }}>
             Sign out

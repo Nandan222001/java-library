@@ -69,6 +69,25 @@ export default function Account() {
           </button>
         </div>
       </div>
+
+      <div className="card" style={{ marginTop: 18 }}>
+        <h3>🎮 Progress</h3>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginBottom: 14 }}>
+          <div><div className="muted fs13">Points</div><b style={{ fontSize: 22 }}>{me?.points ?? 0}</b></div>
+          <div><div className="muted fs13">Current streak</div><b style={{ fontSize: 22 }}>{me?.current_streak ?? 0} 🔥</b></div>
+          <div><div className="muted fs13">Longest streak</div><b style={{ fontSize: 22 }}>{me?.longest_streak ?? 0}</b></div>
+        </div>
+        {me?.badges?.length
+          ? <div className="pillrow" style={{ margin: 0 }}>
+              {me.badges.map(b => (
+                <span key={b.id} className="chip premium" title={b.description}>
+                  {b.icon} {b.label}
+                </span>
+              ))}
+            </div>
+          : <p className="muted">No badges yet — take a practice quiz to start earning points.</p>}
+        <Link to="/leaderboard" className="btn ghost" style={{ marginTop: 14 }}>See leaderboard →</Link>
+      </div>
     </div>
   );
 }
