@@ -42,6 +42,7 @@ export async function mountReader(container, { slug, startFlips = 0 }) {
       <button id="hsNext" class="hotspot hs-right" aria-label="Next page">›</button>
     </div></main>
     <footer id="bottombar">
+      <button id="btnMark" title="Bookmark this spread">☆ Mark</button>
       <button id="btnPrev" class="navbtn">‹ Prev</button>
       <div id="progressWrap">
         <input type="range" id="scrubber" min="0" max="1" step="1" value="0" aria-label="Jump to any spread">
