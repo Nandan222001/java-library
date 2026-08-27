@@ -1,0 +1,202 @@
+
+/* ---------- bottom bar ---------- */
+#bottombar{position:fixed;left:0;right:0;bottom:0;height:var(--bb-h);z-index:200;display:flex;align-items:center;
+  gap:14px;padding:0 18px;background:linear-gradient(#20130b,#170d07);border-top:1px solid #4a3018;color:#ead9b4}
+.navbtn{background:#241509;border:1px solid #5a3c1e;color:#f0e2c2;border-radius:22px;padding:8px 16px;cursor:pointer;
+  font:600 13.5px 'Crimson Pro',serif;letter-spacing:.04em;transition:.18s;white-space:nowrap}
+.navbtn:hover:not(:disabled){border-color:var(--accent);color:#fff;background:#33200c;transform:translateY(-1px)}
+.navbtn:disabled{opacity:.35;cursor:default}
+#btnMark{background:none;border:1px dashed #7a5a30;border-radius:22px;padding:8px 14px;cursor:pointer;
+  color:#d9c391;font:600 13px 'Crimson Pro',serif;white-space:nowrap;transition:.18s}
+#btnMark:hover{color:#ffd88a;border-color:var(--gold)}
+#btnMark.on{background:#c9a22726;border-style:solid;border-color:var(--gold);color:#ffe08f}
+#progressWrap{flex:1;display:flex;align-items:center;gap:14px;min-width:120px}
+#scrubber{flex:1;-webkit-appearance:none;appearance:none;height:8px;border-radius:6px;outline:none;cursor:pointer;
+  background:linear-gradient(90deg,var(--accent) var(--fill,0%),#46301a var(--fill,0%));}
+#scrubber::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#ffcf8a,var(--accent) 60%,#7c3f00);border:2px solid #331c05;
+  box-shadow:0 2px 8px #000a}
+#scrubber::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid #331c05}
+#pageLabel{font:700 12.5px 'Fira Code',monospace;color:#d9bd85;min-width:110px;text-align:center;letter-spacing:.06em;white-space:nowrap}
+
+/* ---------- TOC drawer ---------- */
+#tocDrawer{position:fixed;top:var(--tb-h);bottom:var(--bb-h);left:-400px;width:372px;z-index:250;
+  background:linear-gradient(160deg,#2c1c10,#190f08);color:#efe3cb;overflow-y:auto;transition:left .34s cubic-bezier(.6,0,.3,1);
+  border-right:2px solid #4a3018;box-shadow:14px 0 34px #0009;padding-bottom:20px}
+#tocDrawer.open{left:0}
+.dr-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px 10px;position:sticky;top:0;
+  background:linear-gradient(#2c1c10,#2c1c10ee);z-index:2;border-bottom:1px solid #4a3018}
+.dr-head h3{margin:0;font-family:'Playfair Display',serif;font-size:19px;color:#f4dfae}
+#drClose{background:none;border:0;color:#caa96a;font-size:17px;cursor:pointer;padding:4px 8px;border-radius:8px}
+#drClose:hover{background:#3a230f;color:#fff}
+.toc-part{padding:13px 18px 4px;font:700 11px 'Fira Code',monospace;letter-spacing:.24em;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px}
+.toc-part i{width:11px;height:11px;border-radius:3px;background:var(--pc,#888);flex:0 0 auto}
+.dr-row{display:flex;align-items:baseline;gap:8px;padding:5px 18px;cursor:pointer;font-size:14.5px;line-height:1.3}
+.dr-row:hover{background:#3a230f}
+.dr-row .n{font:700 10.5px 'Fira Code',monospace;color:#c98f3d;min-width:24px}
+.dr-row .t{flex:1}
+.dr-row .p{font:600 11px 'Fira Code',monospace;color:#8fa3c7}
+.dr-bm{padding:14px 18px;border-top:1px solid #4a3018;margin-top:10px}
+.dr-bm h4{margin:0 0 8px;font-size:14px;color:#f4dfae}
+.bm-chip{display:inline-block;background:#3a230f;border:1px solid #6b4a20;color:#ecc987;border-radius:16px;
+  padding:3px 10px;margin:0 6px 6px 0;cursor:pointer;font:600 12px 'Fira Code',monospace}
+.bm-chip:hover{border-color:var(--accent);color:#fff}
+.dr-bm em{color:#9b8563;font-size:13px}
+
+/* ---------- toasts ---------- */
+#toastZone{position:fixed;right:18px;bottom:calc(var(--bb-h) + 14px);z-index:400;display:flex;flex-direction:column;
+  gap:9px;align-items:flex-end}
+.toast{display:flex;align-items:center;gap:12px;background:#241608f2;border:1px solid #6b4a20;color:#f2e5c5;
+  border-left:4px solid var(--accent);border-radius:12px;padding:10px 14px;max-width:380px;font-size:14px;
+  box-shadow:0 10px 26px #000a;animation:tIn .3s ease}
+.toast button{background:var(--accent-deep);border:0;color:#fff;border-radius:8px;padding:5px 11px;cursor:pointer;
+  font:700 12.5px 'Crimson Pro',serif;white-space:nowrap}
+.toast button:hover{filter:brightness(1.15)}
+@keyframes tIn{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+.toast.out{opacity:0;transform:translateX(30px);transition:.3s}
+
+/* ================= Java Zero→FAANG · engine styles ================= */
+*{box-sizing:border-box}
+html,body{height:100%}
+:root{
+  --tb-h:54px; --bb-h:58px;
+  --paper:#fbf4e2; --paper-shade:#f2e6ca; --paper-edge:#e5d5ae;
+  --ink:#33261b; --ink-strong:#201509; --muted:#8a7763;
+  --accent:#e76f00; --accent-deep:#a34e00; --royal:#26418f; --gold:#c9a227;
+  --good:#2e7d32; --bad:#b00020; --info:#00695c; --violet:#6a1b9a;
+  --card-border:#e2d2ab;
+  --code-bg:#20242c; --code-ink:#dbe2ee;
+}
+body.night{
+  --paper:#26221b; --paper-shade:#1e1b15; --paper-edge:#171409;
+  --ink:#dbcfb8; --ink-strong:#f6eedc; --muted:#a08f76;
+  --card-border:#403a2c;
+}
+body{
+  margin:0; overflow:hidden;
+  font-family:'Crimson Pro',Georgia,'Times New Roman',serif;
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; text-rendering:optimizeLegibility;
+  background:
+    radial-gradient(1100px 620px at 50% -8%, rgba(128,78,42,.30), transparent 60%),
+    radial-gradient(900px 520px at 88% 112%, rgba(70,38,20,.38), transparent 60%),
+    linear-gradient(180deg,#231510,#120b08 72%);
+}
+body.night{
+  background:
+    radial-gradient(1100px 620px at 50% -8%, rgba(90,60,30,.18), transparent 60%),
+    linear-gradient(180deg,#0d0b09,#050404 75%);
+}
+body::before{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:repeating-linear-gradient(93deg, rgba(255,255,255,.014) 0 2px, transparent 2px 7px);
+  mix-blend-mode:overlay;
+}
+::selection{background:#e76f0045;color:inherit}
+*::-webkit-scrollbar{width:9px;height:9px}
+*::-webkit-scrollbar-thumb{background:#00000038;border-radius:8px;border:2px solid transparent;background-clip:content-box}
+body.night *::-webkit-scrollbar-thumb{background:#ffffff24;border-radius:8px;border:2px solid transparent;background-clip:content-box}
+
+/* ---------- book stage & flip mechanics ---------- */
+#stage{position:fixed;top:var(--tb-h);left:0;right:0;bottom:var(--bb-h);display:flex;
+  align-items:center;justify-content:center;overflow:hidden}
+#bookWrap{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#bookPan{position:relative;transition:transform .3s ease;will-change:transform}
+#book{position:relative;width:1210px;height:800px;flex:0 0 auto;perspective:3400px;
+  transform:scale(var(--s,1));transform-origin:50% 50%;
+  filter:drop-shadow(0 26px 46px rgba(0,0,0,.55))}
+/* NOTE: we deliberately use transform:scale(), never zoom — zoom is ignored or
+   mis-composed by several mobile engines, which breaks backface culling below
+   and makes both pages of a spread paint on top of each other. */
+.leaf{position:absolute;top:0;left:50%;width:605px;height:800px;
+  transform-style:preserve-3d;-webkit-transform-style:preserve-3d;
+  transform-origin:left center;
+  transition:transform .7s cubic-bezier(.45,.05,.15,1)}
+.leaf.noanim{transition:none}
+.leaf.flipped{transform:rotateY(-180deg);-webkit-transform:rotateY(-180deg)}
+.face{position:absolute;inset:0;background:var(--paper);overflow:hidden;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.face.front{transform:rotateY(0deg);-webkit-transform:rotateY(0deg);
+  box-shadow:8px 0 20px rgba(0,0,0,.3),inset -1px 0 0 rgba(0,0,0,.08)}
+.face.back{transform:rotateY(180deg);-webkit-transform:rotateY(180deg);
+  box-shadow:-8px 0 20px rgba(0,0,0,.3),inset 1px 0 0 rgba(0,0,0,.08)}
+.spine-overlay{position:absolute;top:0;bottom:0;left:50%;width:36px;margin-left:-18px;
+  pointer-events:none;z-index:150;
+  background:linear-gradient(90deg,transparent,rgba(0,0,0,.30) 46%,rgba(0,0,0,.36) 50%,rgba(0,0,0,.30) 54%,transparent)}
+.hotspot{position:absolute;top:0;bottom:0;width:9%;min-width:56px;z-index:180;
+  background:none;border:0;cursor:pointer;color:#f0dcae;opacity:0;
+  font:400 34px/1 'Playfair Display',serif;transition:opacity .2s,background .2s}
+.hotspot:hover{opacity:.85}
+.hs-left{left:0;text-align:left;padding-left:8px}
+.hs-left:hover{background:linear-gradient(90deg,rgba(0,0,0,.16),transparent)}
+.hs-right{right:0;text-align:right;padding-right:8px}
+.hs-right:hover{background:linear-gradient(270deg,rgba(0,0,0,.16),transparent)}
+
+/* ---------- loader ---------- */
+#loader{position:fixed;inset:0;z-index:999;display:grid;place-content:center;justify-items:center;gap:10px;
+  background:linear-gradient(#1a100b,#0d0806);color:#e8d9ba;transition:opacity .5s;}
+#loader.hide{opacity:0;pointer-events:none}
+#loader .cup{font-size:64px;animation:bounce 1s ease-in-out infinite alternate;filter:drop-shadow(0 8px 14px #000)}
+#loader p{font-style:italic;letter-spacing:.08em;margin:0}
+@keyframes bounce{from{transform:translateY(0) rotate(-4deg)}to{transform:translateY(-12px) rotate(4deg)}}
+
+/* ---------- toolbar ---------- */
+#toolbar{position:fixed;top:0;left:0;right:0;height:var(--tb-h);z-index:200;display:flex;align-items:center;gap:14px;
+  padding:0 16px;color:#efe2c4;background:linear-gradient(#2b1b11,#20130b);border-bottom:1px solid #4a3018;
+  box-shadow:0 4px 18px #0009;}
+.tb-brand{display:flex;align-items:center;gap:8px;font-size:19px;white-space:nowrap}
+.tb-brand .logo{filter:drop-shadow(0 2px 3px #000)}
+.tb-brand b{font-family:'Playfair Display',serif;font-weight:900;letter-spacing:.02em}
+.tb-brand i{color:#d8a24a;font-style:normal;font-weight:600;font-size:14px;letter-spacing:.06em}
+.tb-search{flex:1;max-width:430px;min-width:150px;margin-left:auto;position:relative}
+#searchBox{width:100%;padding:7px 34px 7px 13px;border-radius:22px;border:1px solid #5a3c1e;outline:none;
+  background:#170e08;color:#f0e4c8;font:500 14px 'Crimson Pro',serif;letter-spacing:.03em}
+#searchBox:focus{border-color:var(--accent);box-shadow:0 0 0 3px #e76f0026}
+#searchBox::placeholder{color:#9b8563}
+.tb-actions{margin-left:auto;display:flex;gap:6px}
+.tb-actions button{background:#170e08;border:1px solid #5a3c1e;color:#ead9b4;border-radius:9px;padding:6px 10px;
+  cursor:pointer;font-size:15px;line-height:1;transition:.18s;display:flex;align-items:center;gap:6px}
+.tb-actions button:hover{border-color:var(--accent);color:#fff;background:#241407;transform:translateY(-1px)}
+.tb-actions .lbl{font:600 12.5px 'Crimson Pro',serif;letter-spacing:.05em}
+.cnt{font:700 11px 'Fira Code',monospace;background:var(--accent-deep);color:#fff;border-radius:9px;padding:1px 6px}
+
+/* ---------- search results dropdown ---------- */
+#searchResults{position:absolute;top:calc(100% + 8px);left:0;right:0;max-height:52vh;overflow:auto;z-index:300;
+  background:#20130b;border:1px solid #5a3c1e;border-radius:12px;box-shadow:0 16px 34px #000b;padding:6px}
+.sr-item{display:block;width:100%;text-align:left;background:none;border:0;color:#e8dabb;cursor:pointer;
+  padding:8px 10px;border-radius:8px;font:500 13.5px 'Crimson Pro',serif;line-height:1.35}
+.sr-item:hover{background:#3a230f}
+.sr-item b{color:var(--accent);font-family:'Fira Code',monospace;font-size:11px;margin-right:6px}
+.sr-empty{padding:10px;color:#9b8563;font-style:italic;text-align:center}
+
+/* ---------- responsive breakpoints (kept last so they win the cascade) ---------- */
+@media (max-width:900px){
+  .tb-brand b,.tb-brand i,.tb-actions .lbl{display:none}
+  .tb-search{max-width:none}
+  #pageLabel{min-width:84px;font-size:11px}
+  .navbtn{padding:8px 11px}
+  #btnMark{display:none}
+  .spine-overlay{display:none}
+  .hotspot{width:15%;min-width:40px}
+  /* drop-shadow on the 3D container flattens compositing on many mobile GPUs
+     (faces already carry their own shadows) */
+  #book{filter:none}
+}
+@media (max-width:480px){
+  #toolbar{padding:0 10px;gap:8px}
+  .tb-search{min-width:64px}
+  .tb-actions{gap:3px}
+  .tb-actions button{padding:6px 8px;font-size:14px}
+  #bottombar{padding:0 10px;gap:8px}
+  .navbtn{padding:7px 9px;font-size:12.5px}
+  #pageLabel{min-width:0;font-size:10px}
+  #progressWrap{gap:8px;min-width:60px}
+}
+@media (prefers-reduced-motion:reduce){
+  .leaf{transition-duration:.25s}
+  #loader .cup{animation:none}
+}
+@media (hover:none){
+  .hotspot{opacity:.38}
+}
