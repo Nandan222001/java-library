@@ -114,6 +114,12 @@ export async function mountReader(container, { slug, startFlips = 0 }) {
     }
   };
 
+  // window.BOOK must exist BEFORE book.js is injected — the engine's buildToc()
+  // reads it at load time. Populate it from the meta via init() (which also sets
+  // the closure `meta` below, returned to the Reader page). If meta can't be
+  // fetched (401/402/network), reject here so we never inject a broken engine.
+  await window.BOOK_SRC.init();
+
   await injectScript('/engine/js/sound.js?v=6');
   await injectScript('/engine/js/highlight.js?v=6');
   await injectScript('/engine/js/book.js?v=6');     // builds leaves from window.BOOK
