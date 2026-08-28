@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { admin } from '../lib/supabase.js';
+import { getSmtpSettings, sendMail } from '../lib/mailer.js';
 
 const r = Router();
 
@@ -338,6 +339,82 @@ r.patch('/users/:id', adminGate, async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+/* ---------------------------------------------------------------
+ * SMTP settings — used by the server's own outgoing email (the
+ * learning-reminder feature, admin test sends). Separate from, and
+ * has no effect on, Supabase Auth's own confirmation/reset emails —
+ * those are configured only in the Supabase Dashboard.
+ * --------------------------------------------------------------- */
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+/* GET /api/admin/smtp — never returns the password; `configured` tells
+ * the admin UI whether a row exists yet at all. */
+r.get('/smtp', adminGate, async (req, res) => {
+  const { data, error } = await admin.from('smtp_settings')
+    .select('host,port,secure,username,from_email,from_name,updated_at')
+    .eq('id', 1).maybeSingle();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ configured: !!data, ...data });
+});
+
+/* PUT /api/admin/smtp — upsert the singleton row. `password` is optional
+ * on an update (blank keeps the existing one) but required the first
+ * time a row is created. */
+r.put('/smtp', adminGate, async (req, res) => {
+  const b = req.body || {};
+  const host = str(b.host, 1, 255);
+  const port = Number(b.port);
+  const username = str(b.username, 1, 255);
+  const fromEmail = str(b.from_email, 3, 255);
+  const fromName = String(b.from_name ?? '').slice(0, 120);
+  const password = typeof b.password === 'string' ? b.password : '';
+
+  if (!host) return res.status(400).json({ error: 'host required' });
+  if (!Number.isInteger(port) || port < 1 || port > 65535)
+    return res.status(400).json({ error: 'port must be 1-65535' });
+  if (!username) return res.status(400).json({ error: 'username required' });
+  if (!fromEmail || !EMAIL_RE.test(fromEmail))
+    return res.status(400).json({ error: 'from_email must be a valid email address' });
+
+  const { data: existing } = await admin.from('smtp_settings')
+    .select('password').eq('id', 1).maybeSingle();
+  if (!existing && !password)
+    return res.status(400).json({ error: 'password required on first setup' });
+
+  const { error } = await admin.from('smtp_settings').upsert({
+    id: 1, host, port, secure: !!b.secure, username,
+    password: password || existing.password,
+    from_email: fromEmail, from_name: fromName,
+    updated_at: new Date().toISOString(), updated_by: req.user?.id || null
+  }, { onConflict: 'id' });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
+/* POST /api/admin/smtp/test — sends a real email using the saved settings
+ * so the admin can confirm Gmail app-password / port / TLS choices work
+ * before relying on them for the reminder feature. Defaults `to` to the
+ * requesting admin's own email. */
+r.post('/smtp/test', adminGate, async (req, res) => {
+  const to = str(req.body?.to, 3, 255) || req.profile?.email;
+  if (!to || !EMAIL_RE.test(to))
+    return res.status(400).json({ error: 'to must be a valid email address' });
+  try {
+    const settings = await getSmtpSettings();
+    if (!settings)
+      return res.status(400).json({ error: 'Save SMTP settings before sending a test email' });
+    await sendMail({
+      to, subject: '☕ Java Library — SMTP test email',
+      html: '<p>This confirms your SMTP settings are working. 🎉</p>' +
+            '<p>Sent from the Java Library admin panel.</p>',
+      text: 'This confirms your SMTP settings are working. Sent from the Java Library admin panel.'
+    });
+    res.json({ ok: true, sent_to: to });
+  } catch (err) {
+    res.status(502).json({ error: `SMTP send failed: ${err.message}` });
   }
 });
 

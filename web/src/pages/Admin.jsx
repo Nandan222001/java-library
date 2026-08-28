@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/supabase.js';
 
-const TABS = ['Books', 'Plans', 'Users'];
+const TABS = ['Books', 'Plans', 'Users', 'Email'];
 
 export default function Admin() {
   const [tab, setTab] = useState('Books');
@@ -17,6 +17,7 @@ export default function Admin() {
       {tab === 'Books' && <BooksPanel/>}
       {tab === 'Plans' && <PlansPanel/>}
       {tab === 'Users' && <UsersPanel/>}
+      {tab === 'Email' && <EmailPanel/>}
     </div>
   );
 }
@@ -171,6 +172,128 @@ function PlansPanel() {
             </button>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function EmailPanel() {
+  const [f, setF] = useState(null);
+  const [configured, setConfigured] = useState(false);
+  const [err, setErr] = useState('');
+  const [msg, setMsg] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [testTo, setTestTo] = useState('');
+  const [testing, setTesting] = useState(false);
+
+  useEffect(() => {
+    api('/api/admin/smtp').then(d => {
+      setConfigured(!!d.configured);
+      setF({
+        host: d.host || '', port: d.port || 587, secure: !!d.secure,
+        username: d.username || '', password: '',
+        from_email: d.from_email || '', from_name: d.from_name || ''
+      });
+    }).catch(e => setErr(e.message));
+  }, []);
+
+  function set(field, value) { setF(x => ({ ...x, [field]: value })); }
+
+  function useGmailDefaults() {
+    setF(x => ({ ...x, host: 'smtp.gmail.com', port: 587, secure: false }));
+  }
+
+  async function save(e) {
+    e.preventDefault();
+    setSaving(true); setMsg(''); setErr('');
+    try {
+      await api('/api/admin/smtp', {
+        method: 'PUT',
+        body: JSON.stringify({
+          host: f.host, port: Number(f.port), secure: f.secure,
+          username: f.username, password: f.password,
+          from_email: f.from_email, from_name: f.from_name
+        })
+      });
+      setMsg('SMTP settings saved ✓');
+      setConfigured(true);
+      set('password', '');
+    } catch (ex) { setErr(ex.message); }
+    finally { setSaving(false); }
+  }
+
+  async function sendTest() {
+    setTesting(true); setMsg(''); setErr('');
+    try {
+      const r = await api('/api/admin/smtp/test', {
+        method: 'POST',
+        body: JSON.stringify(testTo ? { to: testTo } : {})
+      });
+      setMsg(`Test email sent to ${r.sent_to} ✓ — check the inbox (and spam folder).`);
+    } catch (ex) { setErr(ex.message); }
+    finally { setTesting(false); }
+  }
+
+  if (!f) return <div className="loading-block"><div className="spin"/><span>Loading email settings…</span></div>;
+
+  return (
+    <div>
+      <div className="card" style={{ marginBottom: 16 }}>
+        <p className="muted fs13">
+          This SMTP config is used only for emails <em>this app</em> sends (like the learning-reminder
+          feature). It has no effect on Supabase's own signup-confirmation / password-reset emails —
+          those are configured separately in the Supabase Dashboard under
+          Authentication → Settings → SMTP Settings.
+        </p>
+      </div>
+      {err && <div className="errbox">{err}</div>}
+      {msg && <div className="infobox">{msg}</div>}
+      <form className="card admin-row" onSubmit={save}>
+        <div className="admin-row-grid">
+          <label className="field"><span>SMTP host</span>
+            <input value={f.host} placeholder="smtp.gmail.com" onChange={e => set('host', e.target.value)}/>
+          </label>
+          <label className="field"><span>Port</span>
+            <input type="number" value={f.port} onChange={e => set('port', e.target.value)}/>
+          </label>
+          <label className="field checkbox-field">
+            <input type="checkbox" checked={f.secure} onChange={e => set('secure', e.target.checked)}/>
+            <span>Use implicit TLS (port 465) — leave off for STARTTLS on 587</span>
+          </label>
+          <label className="field"><span>Username (e.g. your Gmail address)</span>
+            <input value={f.username} onChange={e => set('username', e.target.value)}/>
+          </label>
+          <label className="field">
+            <span>{configured ? 'Password / app password (leave blank to keep current)' : 'Password / app password'}</span>
+            <input type="password" value={f.password} autoComplete="new-password"
+                   onChange={e => set('password', e.target.value)}/>
+          </label>
+          <label className="field"><span>From email</span>
+            <input type="email" value={f.from_email} onChange={e => set('from_email', e.target.value)}/>
+          </label>
+          <label className="field"><span>From name</span>
+            <input value={f.from_name} onChange={e => set('from_name', e.target.value)}/>
+          </label>
+        </div>
+        <p className="muted fs13">
+          Using Gmail: create an <strong>App Password</strong> at myaccount.google.com/apppasswords
+          (requires 2-Step Verification on the Google account) — your normal Gmail password will not
+          work here. Gmail also requires "From email" to match the signed-in account.{' '}
+          <button type="button" className="btn ghost" onClick={useGmailDefaults}>Use Gmail defaults</button>
+        </p>
+        <button className="btn primary" disabled={saving}>{saving ? 'Saving…' : 'Save SMTP settings'}</button>
+      </form>
+      <div className="card admin-row" style={{ marginTop: 16 }}>
+        <h4>Send a test email</h4>
+        <div className="admin-row-grid">
+          <label className="field"><span>Send to (blank = your own account email)</span>
+            <input type="email" value={testTo} onChange={e => setTestTo(e.target.value)}/>
+          </label>
+        </div>
+        <button className="btn" disabled={testing || !configured} onClick={sendTest}>
+          {testing ? 'Sending…' : 'Send test email'}
+        </button>
+        {!configured && <p className="muted fs13">Save your SMTP settings first.</p>}
       </div>
     </div>
   );
