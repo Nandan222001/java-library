@@ -44,5 +44,10 @@ export async function bookEntitlement(admin, userId, entitlementsObj, bookIdOrSl
   const { data: purchase } = await admin.from('book_purchases')
     .select('id').eq('book_id', book.id).eq('user_id', userId).maybeSingle();
   if (purchase) return { allowed: true, code: 200, book };
+  /* admin-issued READ permission (book_grants) — the "give a user read
+   * access to a book" feature. Mirrors has_book_access() in the DB. */
+  const { data: grant } = await admin.from('book_grants')
+    .select('id').eq('book_id', book.id).eq('user_id', userId).maybeSingle();
+  if (grant) return { allowed: true, code: 200, book };
   return { allowed: false, code: 402, book };
 }

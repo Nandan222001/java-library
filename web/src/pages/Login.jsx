@@ -11,9 +11,9 @@ export default function Login() {
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
 
-  /* restore an existing session straight into the library */
+  /* restore an existing session straight into the dashboard */
   useEffect(() => {
-    if (!loading && session) nav('/library', { replace: true });
+    if (!loading && session) nav('/dashboard', { replace: true });
   }, [session, loading, nav]);
 
   async function submit(e) {
@@ -22,7 +22,7 @@ export default function Login() {
     try {
       const { error } = await signIn(email.trim(), pass);
       if (error) throw error;
-      nav(loc.state?.from || '/library', { replace: true });
+      nav(loc.state?.from || '/dashboard', { replace: true });
     } catch (ex) {
       setErr(ex.message || 'Sign-in failed');
     } finally {

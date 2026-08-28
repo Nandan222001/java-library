@@ -270,7 +270,31 @@ r.get('/users', adminGate, async (req, res) => {
         .gt('current_end', new Date().toISOString())
     : { data: [] };
   const subMap = new Map((subs || []).map(s => [s.user_id, s]));
-  res.json(users.map(u => ({ ...u, subscription: subMap.get(u.id) || null })));
+
+  /* read-permission grants per user (book_grants) so the admin panel can
+   * show and revoke them inline */
+  const { data: grants } = ids.length
+    ? await admin.from('book_grants')
+        .select('user_id,book_id,created_at,books(slug,title,cover_emoji)')
+        .in('user_id', ids)
+    : { data: [] };
+  const grantMap = new Map();
+  for (const g of grants || []) {
+    if (!grantMap.has(g.user_id)) grantMap.set(g.user_id, []);
+    grantMap.get(g.user_id).push({
+      book_id: g.book_id,
+      slug: g.books?.slug || '',
+      title: g.books?.title || 'Book',
+      cover_emoji: g.books?.cover_emoji || '📕',
+      created_at: g.created_at
+    });
+  }
+
+  res.json(users.map(u => ({
+    ...u,
+    subscription: subMap.get(u.id) || null,
+    granted_books: grantMap.get(u.id) || []
+  })));
 });
 
 /* PATCH /api/admin/users/:id — change role and/or grant/revoke premium.
@@ -340,6 +364,218 @@ r.patch('/users/:id', adminGate, async (req, res) => {
   } catch (err) {
     res.status(err.status || 500).json({ error: err.message });
   }
+});
+
+/* ---------------------------------------------------------------
+ * Analytics — powers the admin Dashboard (sales graphs, signups,
+ * top books, recent transactions). Pure read-only aggregation over
+ * the payments ledger + subscriptions + purchases + profiles.
+ * --------------------------------------------------------------- */
+r.get('/stats', adminGate, async (_req, res) => {
+  try {
+    const DAY = 86400000;
+    const now = new Date();
+    const since = new Date(now.getTime() - 13 * DAY);
+    since.setHours(0, 0, 0, 0);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const dayKey = d =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+    const [{ count: userCount }, { data: booksR, error: booksErr },
+           { data: subsR }, { data: payR }, { data: signR },
+           { data: purchR }, { data: allPayR }, { data: recentR }] = await Promise.all([
+      admin.from('profiles').select('id', { count: 'exact', head: true }),
+      admin.from('books').select('id,title,slug,cover_emoji,published'),
+      admin.from('subscriptions').select('plan_id')
+        .eq('status', 'active').gt('current_end', now.toISOString()),
+      admin.from('payments').select('amount_paise,kind,status,created_at')
+        .gte('created_at', since.toISOString()),
+      admin.from('profiles').select('created_at').gte('created_at', since.toISOString()),
+      admin.from('book_purchases').select('book_id,price_paise_paid').limit(5000),
+      admin.from('payments').select('amount_paise,kind,status,created_at')
+        .in('status', ['captured']).limit(10000),
+      admin.from('payments')
+        .select('id,user_id,kind,amount_paise,provider,plan_id,book_id,status,created_at')
+        .order('created_at', { ascending: false }).limit(10)
+    ]);
+    if (booksErr) throw booksErr;
+
+    const txIds = (recentR || []).map(tx => tx.user_id);
+    const profRows = txIds.length
+      ? (await admin.from('profiles')
+          .select('id,email,display_name').in('id', txIds)).data
+      : [];
+    const planRows = (await admin.from('plans').select('plan_id,name')).data || [];
+
+    const bookMeta = new Map((booksR || []).map(b => [b.id, b]));
+    const userMap = new Map(profRows.map(u => [u.id, u]));
+    const planName = new Map(planRows.map(p => [p.plan_id, p.name]));
+
+    const buckets = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(now);
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - i);
+      buckets.push({
+        date: dayKey(d),
+        label: `${d.getDate()} ${d.toLocaleString('en', { month: 'short' })}`,
+        orders: 0, revenue_paise: 0, signups: 0
+      });
+    }
+    const byKey = new Map(buckets.map(b => [b.date, b]));
+
+    for (const p of payR || []) {
+      const b = byKey.get(dayKey(new Date(p.created_at)));
+      if (!b) continue;
+      b.orders += 1;
+      if (p.status === 'captured' && p.kind !== 'admin_grant') b.revenue_paise += p.amount_paise;
+    }
+    for (const s of signR || []) {
+      const b = byKey.get(dayKey(new Date(s.created_at)));
+      if (b) b.signups += 1;
+    }
+
+    let totalRevenue = 0, monthRevenue = 0;
+    for (const p of allPayR || []) {
+      if (p.status !== 'captured' || p.kind === 'admin_grant') continue;
+      totalRevenue += p.amount_paise;
+      if (new Date(p.created_at) >= monthStart) monthRevenue += p.amount_paise;
+    }
+
+    const bookAgg = new Map();
+    for (const p of purchR || []) {
+      const a = bookAgg.get(p.book_id) || { purchases: 0, revenue_paise: 0 };
+      a.purchases += 1;
+      a.revenue_paise += p.price_paise_paid || 0;
+      bookAgg.set(p.book_id, a);
+    }
+    const top_books = [...bookAgg.entries()]
+      .map(([id, a]) => ({ ...a, ...(bookMeta.get(id) || {}) }))
+      .filter(b => b.title)
+      .sort((a, b2) => b2.revenue_paise - a.revenue_paise)
+      .slice(0, 6)
+      .map(b => ({
+        slug: b.slug, title: b.title,
+        cover_emoji: b.cover_emoji || '📕',
+        purchases: b.purchases, revenue_paise: b.revenue_paise
+      }));
+
+    const planCount = new Map();
+    for (const s of subsR || []) planCount.set(s.plan_id, (planCount.get(s.plan_id) || 0) + 1);
+
+    const recent_transactions = (recentR || []).map(tx => ({
+      id: tx.id,
+      user_name: userMap.get(tx.user_id)?.display_name || '',
+      user_email: userMap.get(tx.user_id)?.email || '',
+      item: tx.plan_id ? (planName.get(tx.plan_id) || tx.plan_id)
+           : tx.book_id ? (bookMeta.get(tx.book_id)?.title || 'Book') : '—',
+      kind: tx.kind, amount_paise: tx.amount_paise,
+      provider: tx.provider, status: tx.status, date: tx.created_at
+    }));
+
+    res.json({
+      totals: {
+        users: userCount || 0,
+        books: (booksR || []).length,
+        published_books: (booksR || []).filter(b => b.published).length,
+        active_subs: (subsR || []).length,
+        total_revenue_paise: totalRevenue,
+        month_revenue_paise: monthRevenue
+      },
+      sales_series: buckets.map(b => ({
+        date: b.date, label: b.label, orders: b.orders, revenue_paise: b.revenue_paise
+      })),
+      signups_series: buckets.map(b => ({ date: b.date, label: b.label, signups: b.signups })),
+      top_books,
+      plan_split: [...planCount.entries()].map(([plan_id, count]) => ({ plan_id, count })),
+      recent_transactions
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ---------------------------------------------------------------
+ * Books — create a brand-new book shell from the admin panel.
+ * --------------------------------------------------------------- */
+function slugifyBook(s) {
+  return String(s || '').toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'book';
+}
+
+r.post('/books', adminGate, async (req, res) => {
+  const b = req.body || {};
+  const title = str(b.title, 2, 200);
+  if (!title) return res.status(400).json({ error: 'title required' });
+
+  let slug = str(b.slug || slugifyBook(title), 2, 80);
+  if (!slug || !/^[a-z0-9-]+$/.test(slug)) slug = slugifyBook(title);
+
+  const { data: existing } = await admin.from('books')
+    .select('slug').eq('slug', slug).maybeSingle();
+  if (existing) slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
+
+  const { data, error } = await admin.from('books').insert({
+    slug, title,
+    subtitle: String(b.subtitle || '').slice(0, 300),
+    author: String(b.author || '').slice(0, 120),
+    cover_emoji: str(b.cover_emoji, 1, 8) || '📕',
+    tier: b.tier === 'premium' ? 'premium' : 'free',
+    price_paise: Math.max(0, Math.round(Number(b.price_paise) || 0)),
+    published: !!b.published,
+    created_by: req.user?.id || null
+  }).select('id,slug,title,tier,published,price_paise').single();
+  if (error) return res.status(400).json({ error: error.message });
+
+  console.log(`[ADMIN] ${req.user?.id} created book "${title}" (${slug})`);
+  res.status(201).json(data);
+});
+
+/* ---------------------------------------------------------------
+ * Read-permission grants — give a specific user read access to a
+ * specific book without any subscription/purchase. book_grants is
+ * honored by has_book_access() in Postgres AND bookEntitlement() in
+ * the Node API, so the wall is closed at both layers.
+ * --------------------------------------------------------------- */
+r.get('/grants', adminGate, async (_req, res) => {
+  const { data, error } = await admin.from('book_grants')
+    .select('id,user_id,book_id,note,created_at,profiles(email,display_name),books(slug,title,cover_emoji)')
+    .order('created_at', { ascending: false }).limit(200);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json((data || []).map(g => ({
+    id: g.id, user_id: g.user_id, book_id: g.book_id,
+    note: g.note || '', created_at: g.created_at,
+    user_email: g.profiles?.email || '',
+    user_name: g.profiles?.display_name || '',
+    book_slug: g.books?.slug || '',
+    book_title: g.books?.title || '',
+    cover_emoji: g.books?.cover_emoji || '📕'
+  })));
+});
+
+r.post('/grants', adminGate, async (req, res) => {
+  const { user_id, book_id } = req.body || {};
+  if (typeof user_id !== 'string' || typeof book_id !== 'string')
+    return res.status(400).json({ error: 'user_id and book_id required' });
+  const { data, error } = await admin.from('book_grants').upsert({
+    user_id, book_id,
+    granted_by: req.user?.id || null,
+    note: String(req.body?.note || '').slice(0, 200)
+  }, { onConflict: 'user_id,book_id', ignoreDuplicates: true })
+    .select('id,user_id,book_id')
+    .maybeSingle();
+  if (error) return res.status(400).json({ error: error.message });
+  res.status(201).json(data || { ok: true });
+});
+
+r.delete('/grants', adminGate, async (req, res) => {
+  const { user_id, book_id } = req.body || req.query || {};
+  if (!user_id || !book_id)
+    return res.status(400).json({ error: 'user_id and book_id required' });
+  const { error } = await admin.from('book_grants').delete()
+    .eq('user_id', user_id).eq('book_id', book_id);
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ ok: true });
 });
 
 /* ---------------------------------------------------------------

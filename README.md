@@ -24,11 +24,14 @@ java-library/
     └── src/
         ├── context/AuthContext.jsx   ← session · role/plan state · JWT bridge
         ├── lib/engineLoader.js       ← mounts engine into #host via BOOK_SRC→Node API
-        └── pages/  Library · Reader · Pricing · Account · Login · Signup
+        └── pages/  Dashboard · Library · Reader · Pricing · Account · Login · Signup · Admin
 ```
 
 ## 1 · Database
-Dashboard → SQL Editor → paste & RUN `supabase/schema.sql`.
+Dashboard → SQL Editor → paste & RUN `supabase/schema.sql`, then run the
+migrations in order: `supabase/migrations/002_pricing_mcq_gamification.sql`,
+`003_smtp_settings.sql`, and `004_dashboard_grants_payments.sql`
+(dashboards · read-permission grants · payments ledger for sales graphs).
 
 ## 2 · Server
 ```bash
@@ -70,10 +73,50 @@ update public.profiles set role='admin'
 | Writes | profiles/name & progress via user-token client (RLS-checked); billing/import exclusively via service-role on trusted routes |
 
 ## 💳 Payments
-`sandbox` provider activates plans instantly for testing. To go live:
-swap the mutation inside `routes/billing.js POST /checkout` for a Stripe
-Checkout Session, and let the payment webhook write the same
-`subscriptions` row — zero downstream changes needed.
+Everything bills against one table, `subscriptions` and `book_purchases`,
+so entitlement logic never changes with the gateway.
+
+- **Sandbox (default)** — `POST /api/billing/checkout` and
+  `POST /api/billing/purchase/:slug` activate instantly, charging nothing.
+- **Razorpay (live)** — set `RAZORPAY_KEY_ID` + `RAZORPAY_KEY_SECRET`;
+  the UI now does `POST /api/billing/order` → hosted Razorpay checkout →
+  `POST /api/billing/verify` (HMAC-SHA256 signature check, then activation).
+  A signed webhook (`POST /api/billing/razorpay/webhook`) is the second,
+  independent activation path — both are idempotent and safe to race.
+  Webhook URL: `https://your-api/…/api/billing/razorpay/webhook` (event:
+  `payment.captured`).
+
+Every captured subscription / purchase / admin grant is recorded in the
+`payments` ledger — that's what the admin sales graphs read from (works in
+sandbox mode too).
+
+## 🧭 Dashboards
+- **`/dashboard` (any signed-in user)** — role-aware overview: books,
+  points/streaks/badges, continue-reading cards, role permissions, and
+  role-appropriate shortcuts (admin gets a one-click gate to the admin panel).
+- **`/admin` (admins only)** — the full admin dashboard: **Dashboard** tab
+  with revenue + signups graphs (14 days), top books, recent transactions,
+  plus Books (incl. **✨ Add a book**), Plans, Users, **Grants** and Email.
+
+## 🔓 Read-permission grants
+Admins can give any reader access to a specific book — no subscription or
+payment required — via **Admin → Users** (per-user picker) or **Admin →
+Grants**. Backed by the `book_grants` table and enforced in **both** Postgres
+RLS (`has_book_access()`) and the Node API (`bookEntitlement()`), so a revoked
+grant is a revoke everywhere.
+
+## 📚 More books
+`server/scripts/seed-books.mjs` imports five ready-made interview-prep books
+(Java 8→17, Spring Boot, DSA, SQL, System Design) each with spread content and
+a practice-question bank — full-replace per slug, safe to re-run:
+
+```bash
+cd server
+node scripts/seed-books.mjs --api http://localhost:8080 --secret $ADMIN_IMPORT_SECRET
+```
+
+You can also create an empty book shell from **Admin → Books → ✨ Add a new
+book**, then fill its content with the import script or the API.
 
 ## 📱 Reader parity kept
 Mobile single-page mode, transform-scale fix, hotkeys, TOC drawer,
@@ -97,7 +140,9 @@ The repo is a monorepo; create **two Vercel projects**, both pointing at this re
 | `SUPABASE_PUBLISHABLE_KEY` | same **publishable** key as `web`'s `VITE_SUPABASE_PUBLISHABLE_KEY` — needed as the `apikey` header for the per-request user-token client (progress sync, profile rename) |
 | `CLIENT_ORIGIN` | your deployed web origin, e.g. `https://your-web-app.vercel.app` |
 | `ADMIN_IMPORT_SECRET` | a long random string (ops import endpoint) |
-| `BILLING_PROVIDER` | `sandbox` (or switch to Stripe/Razorpay later) |
+| `BILLING_PROVIDER` | `sandbox` (or switch to Razorpay later) |
+| `RAZORPAY_KEY_ID` | optional — set both Razorpay keys to go live |
+| `RAZORPAY_KEY_SECRET` | optional — set both Razorpay keys to go live |
 
 The Express app is exported at `server/api/index.js` — no `app.listen()` on Vercel;
 local `npm run dev` still binds the port via `src/index.js`.

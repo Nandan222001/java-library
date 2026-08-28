@@ -1,26 +1,57 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../lib/supabase.js';
+import { useAuth } from '../context/AuthContext.jsx';
+import { openRazorpayCheckout } from '../lib/razorpay.js';
 
 export default function Library() {
   const nav = useNavigate();
+  const { user } = useAuth();
   const [books, setBooks] = useState(null);
   const [err, setErr] = useState('');
   const [buying, setBuying] = useState('');
   const [buyMsg, setBuyMsg] = useState(null);
+  const [pg, setPg] = useState(null);        // /api/billing/config
 
   function load() {
     return api('/api/books').then(setBooks).catch(e => setErr(e.message));
   }
   useEffect(() => { load(); }, []);
+  useEffect(() => { api('/api/billing/config').then(setPg).catch(() => {}); }, []);
 
   async function buy(e, b) {
     e.stopPropagation();
     setBuying(b.id); setBuyMsg(null);
     try {
-      await api(`/api/billing/purchase/${b.slug}`, { method: 'POST' });
-      setBuyMsg({ t: 'ok', m: `Unlocked "${b.title}" 🎉` });
-      await load();
+      if (pg?.provider === 'razorpay' && pg.razorpay_key_id) {
+        /* real Razorpay order → hosted checkout → server-verified signature */
+        const o = await api('/api/billing/order',
+          { method: 'POST', body: JSON.stringify({ book_slug: b.slug }) });
+        await openRazorpayCheckout({
+          key: o.key_id, order_id: o.order_id,
+          amount: o.amount_paise, currency: o.currency,
+          description: b.title,
+          prefill: { email: user?.email || '' },
+          onSuccess: async rz => {
+            try {
+              await api('/api/billing/verify', { method: 'POST', body: JSON.stringify({
+                razorpay_order_id: rz.razorpay_order_id,
+                razorpay_payment_id: rz.razorpay_payment_id,
+                razorpay_signature: rz.razorpay_signature
+              }) });
+              setBuyMsg({ t: 'ok', m: `Unlocked "${b.title}" 🎉` });
+              await load();
+            } catch (ex) {
+              setBuyMsg({ t: 'err', m: `Payment captured but activation failed: ${ex.message}` });
+            }
+          },
+          onFailure: () => setBuyMsg({ t: 'err', m: 'Payment cancelled or failed — no charge was made.' })
+        });
+      } else {
+        await api(`/api/billing/purchase/${b.slug}`, { method: 'POST' });
+        setBuyMsg({ t: 'ok', m: `Unlocked "${b.title}" 🎉` });
+        await load();
+      }
     } catch (ex) {
       setBuyMsg({ t: 'err', m: ex.message });
     } finally {

@@ -5,6 +5,7 @@ import RequireAdmin from './components/RequireAdmin.jsx';
 import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
 import Library from './pages/Library.jsx';
+import Dashboard from './pages/Dashboard.jsx';
 import Reader from './pages/Reader.jsx';
 import Pricing from './pages/Pricing.jsx';
 import Account from './pages/Account.jsx';
@@ -29,6 +30,8 @@ export default function App() {
               <RequireAuth><Library/></RequireAuth>} />
             <Route path="/account" element={
               <RequireAuth><Account/></RequireAuth>} />
+            <Route path="/dashboard" element={
+              <RequireAuth><Dashboard/></RequireAuth>} />
             <Route path="/leaderboard" element={
               <RequireAuth><Leaderboard/></RequireAuth>} />
             <Route path="/books/:slug/practice" element={

@@ -2,29 +2,58 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/supabase.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import { openRazorpayCheckout } from '../lib/razorpay.js';
 
 export default function Pricing() {
-  const { me, refreshMe } = useAuth();
+  const { me, user, refreshMe } = useAuth();
   const [plans, setPlans] = useState(null);
+  const [pg, setPg] = useState(null);        // /api/billing/config
   const [busy, setBusy] = useState('');
   const [msg, setMsg] = useState(null);
   const activeId = me?.subscription?.plan_id;
 
   useEffect(() => {
     api('/api/billing/plans').then(setPlans).catch(e => setMsg({ t: 'err', m: e.message }));
+    api('/api/billing/config').then(setPg).catch(() => {});
   }, []);
 
   async function checkout(plan_id) {
     setBusy(plan_id); setMsg(null);
     try {
-      const r = await api('/api/billing/checkout',
-        { method: 'POST', body: JSON.stringify({ plan_id }) });
-      await refreshMe();
-      setMsg({ t: 'ok',
-        m: r.idempotent ? `Already subscribed to ${plan_id}.`
-                        : `${r.plan.name} activated 🎉 ${r.message}` });
+      if (pg?.provider === 'razorpay' && pg.razorpay_key_id) {
+        /* real Razorpay order → hosted checkout → server-verified signature */
+        const o = await api('/api/billing/order',
+          { method: 'POST', body: JSON.stringify({ plan_id }) });
+        await openRazorpayCheckout({
+          key: o.key_id, order_id: o.order_id,
+          amount: o.amount_paise, currency: o.currency,
+          description: 'Java Library subscription',
+          prefill: { email: user?.email || '' },
+          onSuccess: async rz => {
+            try {
+              await api('/api/billing/verify', { method: 'POST', body: JSON.stringify({
+                razorpay_order_id: rz.razorpay_order_id,
+                razorpay_payment_id: rz.razorpay_payment_id,
+                razorpay_signature: rz.razorpay_signature
+              }) });
+              await refreshMe();
+              setMsg({ t: 'ok', m: 'Payment successful — Premium unlocked 🎉' });
+            } catch (ex) {
+              setMsg({ t: 'err', m: `Payment captured but activation failed: ${ex.message}` });
+            }
+          },
+          onFailure: () => setMsg({ t: 'err', m: 'Payment cancelled or failed — no charge was made.' })
+        });
+      } else {
+        const r = await api('/api/billing/checkout',
+          { method: 'POST', body: JSON.stringify({ plan_id }) });
+        await refreshMe();
+        setMsg({ t: 'ok',
+          m: r.idempotent ? `Already subscribed to ${plan_id}.`
+                          : `${r.plan.name} activated 🎉 ${r.message}` });
+      }
     } catch (e) {
-      setMsg({ t: 'err', m: e.status === 402 ? e.message : e.message });
+      setMsg({ t: 'err', m: e.message });
     } finally {
       setBusy('');
     }
@@ -50,7 +79,9 @@ export default function Pricing() {
     <div className="container" style={{ maxWidth: 960 }}>
       <h1 style={{ textAlign: 'center' }}>Plans &amp; Pricing</h1>
       <p className="muted" style={{ textAlign: 'center' }}>
-        Sandbox billing — no card is charged while payments are in test mode.
+        {pg?.provider === 'razorpay'
+          ? 'Payments are processed securely by Razorpay.'
+          : 'Sandbox billing — no card is charged while payments are in test mode.'}
       </p>
 
       {me?.entitlements?.staff &&

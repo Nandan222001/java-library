@@ -29,7 +29,7 @@ export default function Signup() {
     try {
       const { data, error } = await signUp(email.trim(), p1, name.trim());
       if (error) throw error;
-      if (data.session) nav('/library', { replace: true });   // confirm-off projects
+      if (data.session) nav('/dashboard', { replace: true });   // confirm-off projects
       else setInfo('✅ Account created! Check your inbox for a confirmation link, then sign in.');
     } catch (ex) {
       setErr(ex.message || 'Signup failed');

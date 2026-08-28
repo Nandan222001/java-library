@@ -20,7 +20,7 @@ export default function TopNav() {
 
   return (
     <header className="topnav">
-      <Link to="/" className="brand">☕ Java <i>LIBRARY</i></Link>
+      <Link to={user ? '/dashboard' : '/'} className="brand">☕ Java <i>LIBRARY</i></Link>
       <button className="nav-toggle" aria-label="Menu" aria-expanded={open}
               onClick={() => setOpen(o => !o)}>
         {open ? '✕' : '☰'}
@@ -29,6 +29,7 @@ export default function TopNav() {
         {/* NavLink (not Link) so `end` and the .active CSS highlight
             actually work -- both were previously no-ops on a plain Link */}
         <NavLink to="/library" end>Library</NavLink>
+        {user && <NavLink to="/dashboard">Dashboard</NavLink>}
         <NavLink to="/pricing">Pricing</NavLink>
         {user && <NavLink to="/leaderboard">Leaderboard</NavLink>}
         {me?.profile?.role === 'admin' && <NavLink to="/admin">Admin</NavLink>}

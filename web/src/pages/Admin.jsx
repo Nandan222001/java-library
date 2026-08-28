@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/supabase.js';
 
-const TABS = ['Books', 'Plans', 'Users', 'Email'];
+const TABS = ['Dashboard', 'Books', 'Plans', 'Users', 'Grants', 'Email'];
 
 export default function Admin() {
   const [tab, setTab] = useState('Books');
@@ -14,9 +14,11 @@ export default function Admin() {
                   onClick={() => setTab(t)}>{t}</button>
         ))}
       </div>
+      {tab === 'Dashboard' && <DashboardPanel/>}
       {tab === 'Books' && <BooksPanel/>}
       {tab === 'Plans' && <PlansPanel/>}
       {tab === 'Users' && <UsersPanel/>}
+      {tab === 'Grants' && <GrantsPanel/>}
       {tab === 'Email' && <EmailPanel/>}
     </div>
   );
@@ -59,6 +61,7 @@ function BooksPanel() {
   return (
     <div>
       {msg && <div className="infobox">{msg}</div>}
+      <NewBookForm onCreated={load}/>
       <div className="admin-table">
         {books.map(b => (
           <div key={b.id} className="card admin-row">
@@ -299,18 +302,250 @@ function EmailPanel() {
   );
 }
 
+/* ---------- tiny dependency-free SVG bar chart ---------- */
+function BarChart({ series, color, money }) {
+  const W = 640, H = 168, PAD = 10;
+  const max = Math.max(1, ...series.map(s => s.value));
+  const bw = Math.max(2, (W - PAD * 2) / series.length - 4);
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="chart-svg" role="img" aria-label="Bar chart">
+      {series.map((s, i) => {
+        const h = (s.value / max) * (H - 38);
+        const x = PAD + i * ((W - PAD * 2) / series.length);
+        const y = H - 26 - h;
+        return (
+          <g key={s.label}>
+            <rect x={x} y={y} width={bw} height={Math.max(h, 1)} rx={2.5}
+                  fill={color} opacity={s.value ? 0.95 : 0.12}>
+              <title>{`${s.label} · ${money ? '₹' + (s.value / 100).toLocaleString('en-IN') : s.value}`}</title>
+            </rect>
+            {i % 2 === 0 &&
+              <text x={x + bw / 2} y={H - 10} textAnchor="middle" fontSize="9"
+                    fill="var(--ink-dim)">{s.label.split(' ')[0]}</text>}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function DashboardPanel() {
+  const [st, setSt] = useState(null);
+  const [err, setErr] = useState('');
+
+  useEffect(() => {
+    api('/api/admin/stats').then(setSt).catch(e => setErr(e.message));
+  }, []);
+
+  if (err) return <div className="errbox">{err}</div>;
+  if (!st) return <div className="loading-block"><div className="spin"/><span>Crunching the numbers…</span></div>;
+
+  const t = st.totals;
+  const inr = n => '₹' + (n / 100).toLocaleString('en-IN');
+  const rev = (st.sales_series || []).map(s => ({ label: s.label, value: s.revenue_paise }));
+  const sign = (st.signups_series || []).map(s => ({ label: s.label, value: s.signups }));
+
+  return (
+    <div>
+      <div className="dash-stats">
+        <div className="stat-card"><div className="stat-label">Readers</div><div className="stat-num">{t.users}</div></div>
+        <div className="stat-card"><div className="stat-label">Books published</div><div className="stat-num">{t.published_books}<span className="stat-sub">/{t.books} total</span></div></div>
+        <div className="stat-card"><div className="stat-label">Active subscriptions</div><div className="stat-num">{t.active_subs}</div></div>
+        <div className="stat-card"><div className="stat-label">All-time revenue</div><div className="stat-num">{inr(t.total_revenue_paise)}</div></div>
+        <div className="stat-card"><div className="stat-label">Revenue this month</div><div className="stat-num">{inr(t.month_revenue_paise)}</div></div>
+      </div>
+
+      <div className="dash-charts">
+        <div className="card chart-card">
+          <h4>📈 Sales — last 14 days</h4>
+          <BarChart series={rev} color="var(--accent)" money/>
+        </div>
+        <div className="card chart-card">
+          <h4>👥 New signups — last 14 days</h4>
+          <BarChart series={sign} color="var(--gold)" money={false}/>
+        </div>
+      </div>
+
+      <div className="dash-cols">
+        <div className="card chart-card">
+          <h4>🔥 Top books (one-time purchases)</h4>
+          {st.top_books.length === 0 && <p className="muted">No one-time purchases yet.</p>}
+          {st.top_books.map(b => (
+            <div key={b.slug} className="top-book-row">
+              <span style={{ fontSize: 22 }}>{b.cover_emoji}</span>
+              <span className="leaderboard-name">{b.title}</span>
+              <span className="muted fs13">{b.purchases} sale{b.purchases === 1 ? '' : 's'}</span>
+              <span className="leaderboard-points">{inr(b.revenue_paise)}</span>
+            </div>
+          ))}
+        </div>
+        <div className="card chart-card">
+          <h4>🧾 Recent transactions</h4>
+          <div className="tx-table">
+            {st.recent_transactions.map(tx => (
+              <div key={tx.id} className="tx-row">
+                <div className="tx-left">
+                  <b>{tx.user_name || tx.user_email || 'Anonymous'}</b>
+                  <div className="muted fs13">{tx.item} · {tx.kind.replace('_', ' ')}</div>
+                </div>
+                <div className="tx-right">
+                  <span className="chip premium">₹{(tx.amount_paise / 100).toLocaleString('en-IN')}</span>
+                  <span className="muted fs13">{new Date(tx.date).toLocaleDateString()}</span>
+                </div>
+              </div>
+            ))}
+            {st.recent_transactions.length === 0 && <p className="muted">No transactions yet — subscribers and purchases appear here.</p>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- add a brand-new book shell directly from the panel ---------- */
+function NewBookForm({ onCreated }) {
+  const [f, setF] = useState({ title: '', slug: '', subtitle: '', author: '', cover_emoji: '📕', tier: 'free', price: '', published: false });
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }));
+
+  async function create(e) {
+    e.preventDefault();
+    setBusy(true); setMsg('');
+    try {
+      await api('/api/admin/books', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: f.title, slug: f.slug || undefined,
+          subtitle: f.subtitle, author: f.author,
+          cover_emoji: f.cover_emoji, tier: f.tier,
+          price_paise: Math.max(0, Math.round(Number(f.price) || 0) * 100),
+          published: f.published
+        })
+      });
+      setF({ title: '', slug: '', subtitle: '', author: '', cover_emoji: '📕', tier: 'free', price: '', published: false });
+      setMsg('Book created ✓ — import its spreads with the CLI script later.');
+      onCreated?.();
+    } catch (ex) { setMsg(ex.message); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <form className="card newbook-form" onSubmit={create}>
+      <h4 style={{ marginTop: 0 }}>✨ Add a new book</h4>
+      {msg && <div className="infobox">{msg}</div>}
+      <div className="admin-row-grid">
+        <label className="field"><span>Title *</span>
+          <input required value={f.title} onChange={e => set('title', e.target.value)}/>
+        </label>
+        <label className="field"><span>Slug (optional — auto-generated)</span>
+          <input placeholder="my-new-book" value={f.slug} onChange={e => set('slug', e.target.value)}/>
+        </label>
+        <label className="field"><span>Subtitle</span>
+          <input value={f.subtitle} onChange={e => set('subtitle', e.target.value)}/>
+        </label>
+        <label className="field"><span>Author</span>
+          <input value={f.author} onChange={e => set('author', e.target.value)}/>
+        </label>
+        <label className="field"><span>Cover emoji</span>
+          <input maxLength={8} value={f.cover_emoji} onChange={e => set('cover_emoji', e.target.value)}/>
+        </label>
+        <label className="field"><span>Tier</span>
+          <select value={f.tier} onChange={e => set('tier', e.target.value)}>
+            <option value="free">Free</option>
+            <option value="premium">Premium</option>
+          </select>
+        </label>
+        <label className="field"><span>Price (₹, 0 = not sold individually)</span>
+          <input type="number" min="0" value={f.price} onChange={e => set('price', e.target.value)}/>
+        </label>
+        <label className="field checkbox-field">
+          <input type="checkbox" checked={f.published} onChange={e => set('published', e.target.checked)}/>
+          <span>Publish now</span>
+        </label>
+      </div>
+      <button className="btn primary" disabled={busy} style={{ marginTop: 12 }}>
+        {busy ? 'Creating…' : 'Create book'}
+      </button>
+    </form>
+  );
+}
+
+/* ---------- global read-permission grants manager ---------- */
+function GrantsPanel() {
+  const [grants, setGrants] = useState(null);
+  const [err, setErr] = useState('');
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState('');
+
+  function load() {
+    api('/api/admin/grants').then(setGrants).catch(e => setErr(e.message));
+  }
+  useEffect(load, []);   // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function revoke(g) {
+    setBusy(g.id); setMsg('');
+    try {
+      await api('/api/admin/grants', {
+        method: 'DELETE', body: JSON.stringify({ user_id: g.user_id, book_id: g.book_id })
+      });
+      setMsg('Revoked read access');
+      load();
+    } catch (e) { setMsg(e.message); }
+    finally { setBusy(''); }
+  }
+
+  if (err) return <div className="errbox">{err}</div>;
+
+  return (
+    <div>
+      <p className="muted">
+        Grant a reader access to a single book — no subscription or payment needed.
+        Use the <b>Users</b> tab to grant/revoke per user, or manage everything here.
+      </p>
+      {msg && <div className="infobox">{msg}</div>}
+      {!grants
+        ? <div className="loading-block"><div className="spin"/><span>Loading grants…</span></div>
+        : <div className="admin-table">
+            {grants.map(g => (
+              <div key={g.id} className="card admin-row admin-user-row">
+                <div style={{ flex: 1 }}>
+                  <b>{g.user_name || g.user_email || '—'}</b>
+                  <div className="muted fs13">{g.book_title} · {g.book_slug}</div>
+                </div>
+                <span className="chip premium">{g.cover_emoji} granted</span>
+                <span className="muted fs13">{new Date(g.created_at).toLocaleDateString()}</span>
+                <button className="btn danger" disabled={busy === g.id}
+                        onClick={() => revoke(g)}>Revoke</button>
+              </div>
+            ))}
+            {grants.length === 0 && <div className="infobox">No read grants yet — grant one from the Users tab.</div>}
+          </div>}
+    </div>
+  );
+}
+
 function UsersPanel() {
   const [users, setUsers] = useState(null);
+  const [books, setBooks] = useState([]);
   const [q, setQ] = useState('');
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState('');
   const [msg, setMsg] = useState('');
+  const [grantSel, setGrantSel] = useState({});   // user_id -> book_id
 
   function load() {
     api('/api/admin/users' + (q ? `?q=${encodeURIComponent(q)}` : ''))
       .then(setUsers).catch(e => setErr(e.message));
   }
   useEffect(load, []);   // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* published books are the candidates for read-permission grants */
+  useEffect(() => {
+    api('/api/admin/books')
+      .then(bs => setBooks((bs || []).filter(b => b.published)))
+      .catch(() => {});
+  }, []);
 
   async function changeRole(u, role) {
     setBusy(u.id); setMsg('');
@@ -340,6 +575,32 @@ function UsersPanel() {
     try {
       await api(`/api/admin/users/${u.id}`, { method: 'PATCH', body: JSON.stringify({ revoke_premium: true }) });
       setMsg(`Revoked premium from ${u.display_name || u.email}`);
+      load();
+    } catch (e) { setMsg(e.message); }
+    finally { setBusy(''); }
+  }
+
+  async function grantRead(u) {
+    const book_id = grantSel[u.id];
+    if (!book_id) return;
+    setBusy(u.id); setMsg('');
+    try {
+      await api('/api/admin/grants', {
+        method: 'POST', body: JSON.stringify({ user_id: u.id, book_id })
+      });
+      setMsg(`Granted read access to ${u.display_name || u.email}`);
+      load();
+    } catch (e) { setMsg(e.message); }
+    finally { setBusy(''); }
+  }
+
+  async function revokeRead(u, book_id) {
+    setBusy(u.id); setMsg('');
+    try {
+      await api('/api/admin/grants', {
+        method: 'DELETE', body: JSON.stringify({ user_id: u.id, book_id })
+      });
+      setMsg('Revoked read access');
       load();
     } catch (e) { setMsg(e.message); }
     finally { setBusy(''); }
@@ -377,6 +638,30 @@ function UsersPanel() {
                 {u.subscription
                   ? <button className="btn danger" disabled={busy === u.id} onClick={() => revokePremium(u)}>Revoke premium</button>
                   : <button className="btn" disabled={busy === u.id} onClick={() => grantPremium(u)}>Grant premium</button>}
+                <div className="admin-grants">
+                  <span className="muted fs13">Read access:</span>
+                  <div className="grant-chips">
+                    {(u.granted_books || []).map(gb => (
+                      <span key={gb.book_id} className="chip premium grant-chip">
+                        {gb.cover_emoji} {gb.title}
+                        <button type="button" className="chip-x" title="Revoke"
+                                disabled={busy === u.id}
+                                onClick={() => revokeRead(u, gb.book_id)}>✕</button>
+                      </span>
+                    ))}
+                    {(!u.granted_books || u.granted_books.length === 0)
+                      && <span className="muted fs13">none — grant a book below</span>}
+                  </div>
+                  <div className="admin-grant-box">
+                    <select value={grantSel[u.id] || ''}
+                            onChange={e => setGrantSel(s => ({ ...s, [u.id]: e.target.value }))}>
+                      <option value="">Grant read access…</option>
+                      {books.map(bb => <option key={bb.id} value={bb.id}>{bb.cover_emoji} {bb.title}</option>)}
+                    </select>
+                    <button className="btn" disabled={busy === u.id || !grantSel[u.id]}
+                            onClick={() => grantRead(u)}>Grant</button>
+                  </div>
+                </div>
               </div>
             ))}
             {users.length === 0 && <div className="infobox">No users match.</div>}

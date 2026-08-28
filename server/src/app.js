@@ -3,7 +3,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import meRoutes from './routes/me.js';
 import libraryRoutes from './routes/library.js';
-import billingRoutes from './routes/billing.js';
+import billingRoutes, { webhookHandler } from './routes/billing.js';
 import adminRoutes from './routes/admin.js';
 import practiceRoutes from './routes/practice.js';
 import gamificationRoutes from './routes/gamification.js';
@@ -19,6 +19,13 @@ export function buildApp() {
       .split(',').map(s => s.trim()),
     credentials: false
   }));
+  /* Razorpay webhook verifies the signature over the RAW bytes of the body.
+   * It MUST run before the global express.json() parser — otherwise req.body
+   * arrives as a parsed object and the exact signed bytes are unrecoverable. */
+  app.post('/api/billing/razorpay/webhook',
+    express.raw({ type: '*/*', limit: '1mb' }),
+    webhookHandler);
+
   app.use(express.json({ limit: '12mb' }));   // admin import payloads are big
 
   app.get('/api/health', (_req, res) => res.json({ ok: true, ts: Date.now() }));
