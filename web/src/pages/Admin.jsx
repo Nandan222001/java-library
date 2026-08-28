@@ -1,25 +1,89 @@
 import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../lib/supabase.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
-const TABS = ['Dashboard', 'Books', 'Plans', 'Users', 'Grants', 'Email'];
+const NAV = [
+  { id: 'dashboard', label: 'Dashboard', icon: '📊', desc: 'Revenue, signups & activity', group: 'Overview' },
+  { id: 'books', label: 'Books', icon: '📚', desc: 'Catalog, pricing & publishing', group: 'Content' },
+  { id: 'plans', label: 'Plans', icon: '💳', desc: 'Subscription plans & billing', group: 'Monetisation' },
+  { id: 'users', label: 'Users', icon: '👥', desc: 'Members, roles & premium access', group: 'People' },
+  { id: 'grants', label: 'Read grants', icon: '🔓', desc: 'Per-book read permissions', group: 'People' },
+  { id: 'email', label: 'Email / SMTP', icon: '✉️', desc: 'Outgoing app mail', group: 'Settings' }
+];
+const GROUPS = ['Overview', 'Content', 'Monetisation', 'People', 'Settings'];
 
 export default function Admin() {
-  const [tab, setTab] = useState('Books');
+  const { me, signOut } = useAuth();
+  const nav = useNavigate();
+  const [tab, setTab] = useState('dashboard');
+  const [open, setOpen] = useState(false);    // mobile drawer
+
+  useEffect(() => { setOpen(false); }, [tab]);
+
+  const current = NAV.find(n => n.id === tab);
+
   return (
-    <div className="container">
-      <h1>Admin ⚙️</h1>
-      <div className="admin-tabs">
-        {TABS.map(t => (
-          <button key={t} className={'admin-tab' + (tab === t ? ' active' : '')}
-                  onClick={() => setTab(t)}>{t}</button>
-        ))}
-      </div>
-      {tab === 'Dashboard' && <DashboardPanel/>}
-      {tab === 'Books' && <BooksPanel/>}
-      {tab === 'Plans' && <PlansPanel/>}
-      {tab === 'Users' && <UsersPanel/>}
-      {tab === 'Grants' && <GrantsPanel/>}
-      {tab === 'Email' && <EmailPanel/>}
+    <div className="admin-shell">
+      {open && <div className="admin-overlay" onClick={() => setOpen(false)}/>}
+
+      <aside className={'admin-sidebar' + (open ? ' open' : '')}>
+        <div className="sb-brand">
+          ☕ Java Library
+          <span>Admin panel</span>
+        </div>
+
+        <nav className="admin-sb-nav">
+          {GROUPS.map(g => (
+            <div key={g}>
+              <div className="sb-group">{g}</div>
+              {NAV.filter(n => n.group === g).map(n => (
+                <button key={n.id}
+                        className={'sb-item' + (tab === n.id ? ' active' : '')}
+                        onClick={() => setTab(n.id)}>
+                  <span className="ico">{n.icon}</span>
+                  <span className="sb-label">
+                    <b>{n.label}</b>
+                    <i>{n.desc}</i>
+                  </span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </nav>
+
+        <div className="admin-sb-foot">
+          <Link className="btn ghost sb-back" to="/dashboard">← Back to library</Link>
+          <button className="btn ghost sb-signout"
+                  onClick={async () => { await signOut(); nav('/login'); }}>
+            Sign out
+          </button>
+        </div>
+      </aside>
+
+      <main className="admin-main">
+        <header className="admin-topbar">
+          <button className="admin-burger" aria-label="Open admin menu"
+                  onClick={() => setOpen(o => !o)}>☰</button>
+          <div className="atb-title">
+            <h2>{current.icon} {current.label}</h2>
+            <p>{current.desc}</p>
+          </div>
+          <div className="atb-right">
+            <span className="chip admin">admin</span>
+            <span className="atb-user">{me?.profile?.display_name || me?.profile?.email || ''}</span>
+          </div>
+        </header>
+
+        <div className="admin-content">
+          {tab === 'dashboard' && <DashboardPanel/>}
+          {tab === 'books' && <BooksPanel/>}
+          {tab === 'plans' && <PlansPanel/>}
+          {tab === 'users' && <UsersPanel/>}
+          {tab === 'grants' && <GrantsPanel/>}
+          {tab === 'email' && <EmailPanel/>}
+        </div>
+      </main>
     </div>
   );
 }
@@ -30,9 +94,10 @@ function BooksPanel() {
   const [saving, setSaving] = useState('');
   const [msg, setMsg] = useState('');
 
-  useEffect(() => {
+  function load() {
     api('/api/admin/books').then(setBooks).catch(e => setErr(e.message));
-  }, []);
+  }
+  useEffect(load, []);   // eslint-disable-line react-hooks/exhaustive-deps
 
   function updateField(id, field, value) {
     setBooks(bs => bs.map(b => (b.id === id ? { ...b, [field]: value } : b)));
@@ -348,11 +413,26 @@ function DashboardPanel() {
   return (
     <div>
       <div className="dash-stats">
-        <div className="stat-card"><div className="stat-label">Readers</div><div className="stat-num">{t.users}</div></div>
-        <div className="stat-card"><div className="stat-label">Books published</div><div className="stat-num">{t.published_books}<span className="stat-sub">/{t.books} total</span></div></div>
-        <div className="stat-card"><div className="stat-label">Active subscriptions</div><div className="stat-num">{t.active_subs}</div></div>
-        <div className="stat-card"><div className="stat-label">All-time revenue</div><div className="stat-num">{inr(t.total_revenue_paise)}</div></div>
-        <div className="stat-card"><div className="stat-label">Revenue this month</div><div className="stat-num">{inr(t.month_revenue_paise)}</div></div>
+        <div className="stat-card">
+          <div className="stat-head"><span className="stat-ico">🧑</span><div className="stat-label">Readers</div></div>
+          <div className="stat-num">{t.users}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-head"><span className="stat-ico">📚</span><div className="stat-label">Books published</div></div>
+          <div className="stat-num">{t.published_books}<span className="stat-sub">/{t.books} total</span></div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-head"><span className="stat-ico">✅</span><div className="stat-label">Active subscriptions</div></div>
+          <div className="stat-num">{t.active_subs}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-head"><span className="stat-ico">💰</span><div className="stat-label">All-time revenue</div></div>
+          <div className="stat-num">{inr(t.total_revenue_paise)}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-head"><span className="stat-ico">📅</span><div className="stat-label">Revenue this month</div></div>
+          <div className="stat-num">{inr(t.month_revenue_paise)}</div>
+        </div>
       </div>
 
       <div className="dash-charts">

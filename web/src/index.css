@@ -78,6 +78,54 @@ h1,h2,h3{font-family:'Playfair Display',serif;margin:.2em 0}
   background:transparent;color:var(--ink-dim);cursor:pointer;transition:.15s}
 .admin-tab:hover{border-color:var(--accent);color:var(--shell-ink)}
 .admin-tab.active{background:var(--panel2);color:#fff;border-color:var(--accent)}
+
+/* ---------- admin shell: sidebar + topbar (right-of global nav) ---------- */
+.admin-shell{display:flex;width:100%;min-height:calc(100vh - 62px)}
+.admin-sidebar{position:fixed;top:62px;bottom:0;left:0;z-index:120;width:258px;display:flex;flex-direction:column;
+  background:linear-gradient(180deg,#1e120a 0%,#130b05 100%);border-right:1px solid var(--line)}
+.sb-brand{padding:18px 22px 15px;font-family:'Playfair Display',serif;font-weight:900;font-size:18px;
+  display:flex;flex-direction:column;gap:3px;border-bottom:1px solid #ffffff12}
+.sb-brand span{font:700 10.5px 'Fira Code',monospace;letter-spacing:.18em;color:var(--gold);text-transform:uppercase}
+.admin-sb-nav{flex:1;overflow-y:auto;padding:8px 12px 18px}
+.sb-group{font:700 10px 'Fira Code',monospace;letter-spacing:.18em;text-transform:uppercase;color:#7d674a;
+  padding:17px 10px 7px}
+.sb-item{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:12px;border:none;
+  background:transparent;color:var(--ink-dim);cursor:pointer;transition:.15s;text-align:left}
+.sb-item .ico{font-size:17px;width:24px;text-align:center;flex:0 0 auto}
+.sb-item .sb-label{display:flex;flex-direction:column;gap:1px;min-width:0}
+.sb-item .sb-label b{font:600 15px 'Crimson Pro',serif;color:inherit}
+.sb-item .sb-label i{font:400 11.5px 'Crimson Pro',serif;color:#8a7a5f;font-style:normal;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.sb-item:hover{color:#fff;background:#2a1a0e}
+.sb-item.active{color:#fff;background:var(--accent-soft);border-left:3px solid var(--accent)}
+.sb-item.active .sb-label i{color:#d8b47a}
+.admin-sb-foot{padding:14px 16px;border-top:1px solid #ffffff12;display:flex;flex-direction:column;gap:10px}
+.admin-sb-foot .sb-back{justify-content:flex-start;padding:9px 12px;font-size:14px}
+.admin-sb-foot .sb-signout{justify-content:flex-start;color:#ff9c9c;padding:9px 12px;font-size:14px;border-color:#ef535044}
+
+.admin-main{flex:1;margin-left:258px;min-width:0}
+.admin-topbar{position:sticky;top:62px;z-index:60;display:flex;align-items:center;gap:16px;min-height:62px;
+  padding:10px 26px;background:rgba(18,11,6,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.atb-title h2{margin:0;font-size:19px}
+.atb-title p{margin:1px 0 0;color:var(--ink-dim);font-size:13px}
+.atb-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.atb-user{color:var(--ink-dim);font-weight:600;font-size:14px}
+.admin-burger{display:none;width:38px;height:38px;flex:0 0 auto;align-items:center;justify-content:center;
+  background:transparent;border:1px solid var(--line);border-radius:10px;color:var(--shell-ink);
+  font-size:17px;cursor:pointer}
+.admin-burger:hover{border-color:var(--accent)}
+.admin-overlay{position:fixed;inset:62px 0 0 0;z-index:110;background:#00000099;backdrop-filter:blur(2px)}
+
+.admin-content{padding:26px 28px 70px}
+@media (max-width:900px){
+  .admin-sidebar{transform:translateX(-100%);transition:transform .22s ease;box-shadow:0 20px 50px #000000cc}
+  .admin-sidebar.open{transform:none}
+  .admin-main{margin-left:0}
+  .admin-burger{display:flex}
+  .admin-topbar{padding:10px 16px}
+  .admin-content{padding:20px 16px 60px}
+  .atb-user{display:none}
+}
 .admin-table{display:flex;flex-direction:column;gap:14px}
 .admin-row{display:flex;flex-direction:column;gap:12px}
 .admin-row-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
@@ -148,6 +196,9 @@ h1,h2,h3{font-family:'Playfair Display',serif;margin:.2em 0}
 .stat-link{cursor:pointer;color:inherit}
 .stat-link:hover{transform:translateY(-3px);border-color:var(--accent)}
 .stat-label{font:700 11px 'Fira Code',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim)}
+.stat-head{display:flex;align-items:center;gap:9px}
+.stat-ico{font-size:19px;width:30px;height:30px;flex:0 0 auto;display:grid;place-items:center;border-radius:9px;
+  background:var(--accent-soft);border:1px solid var(--line)}
 .stat-num{font:700 30px 'Playfair Display',serif;color:var(--shell-ink);line-height:1.1}
 .stat-num .stat-sub{font:400 15px 'Crimson Pro',serif;color:var(--ink-dim);margin-left:4px}
 .dash-section{margin:30px 0}
