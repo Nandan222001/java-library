@@ -78,9 +78,14 @@ for (var i = 1; i < pages.length - 1; i++) pages[i].num = i;
 var N = Math.floor(pages.length / 2);   /* number of physical sheets */
 var leaves = [];
 
+/* Same hardcoded-Java-book problem as COVER/BACKCOV above, just missed the
+ * first time — the per-page footer brand was never wired to window.BOOK,
+ * so every OTHER book's pages still showed "☕ JAVA · ZERO→FAANG" in the
+ * footer even after the cover itself was fixed. */
+var FOOT_BRAND = '<span>' + HL.escape(BOOK_EMOJI) + ' ' + HL.escape(BOOK_TITLE.toUpperCase()) + '</span>';
 function faceHTML(p, side) {
   if (p.raw) return '<div class="page ' + p.cls + '">' + p.html + '</div><i class="fold"></i>';
-  var brand = '<span>☕ JAVA · ZERO→FAANG</span>';
+  var brand = FOOT_BRAND;
   var num = '<span class="num">' + (p.num != null ? 'p. ' + p.num : '') + '</span>';
   var head = '<div class="pg-head"><span>' + (p.kicker || '') + '</span><span class="hd-r">' + (p.head || '') + '</span></div>';
   var foot = '<div class="pg-foot' + (side === 'front' ? ' pg-r-foot' : '') + '">' +
@@ -371,10 +376,10 @@ bookEl.addEventListener('click', function (e) {
   if (f === 0 && e.target.closest('.face.front .cover')) goNext();
   else if (f === N && e.target.closest('.face.back .backcov')) goTo(N - 1, true);
 });
-$('#hsPrev').addEventListener('click', goPrev);
-$('#hsNext').addEventListener('click', goNext);
-btnPrev.addEventListener('click', goPrev);
-btnNext.addEventListener('click', goNext);
+$('#hsPrev').addEventListener('click', clickPrev);
+$('#hsNext').addEventListener('click', clickNext);
+btnPrev.addEventListener('click', clickPrev);
+btnNext.addEventListener('click', clickNext);
 
 /* ---------------- touch swipe (mobile single-page mode) ---------------- */
 /* Only dx was checked before, so a mostly-vertical drag (scrolling a tall
@@ -539,6 +544,14 @@ function scrollCurrentPages(dir) {   // dir: 1 = down, -1 = up. Returns true if 
   });
   return moved;
 }
+/* The Next/Prev BUTTON and the left/right HOTSPOT overlays are the primary
+   way most readers turn pages (far more than the ArrowRight/Left keys) —
+   route them through the same scroll-first-then-flip logic as Space/
+   PageDown so a page whose content is taller than the viewport never gets
+   flipped away before its bottom portion was ever seen. ArrowRight/Left
+   deliberately keep the immediate-flip behavior documented above. */
+function clickNext() { if (scrollCurrentPages(1)) return; goNext(); }
+function clickPrev() { if (scrollCurrentPages(-1)) return; goPrev(); }
 document.addEventListener('keydown', function (e) {
   var tag = (e.target.tagName || '').toUpperCase();
   var typing = tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable;
