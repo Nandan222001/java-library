@@ -114,6 +114,34 @@ r.post('/import', adminGate, async (req, res) => {
     tier: book.tier, published: book.published });
 });
 
+/* PATCH /api/admin/books/:slug/spreads/:idx — edit one spread's content
+ * in place, without a full-book reimport. Useful for content touch-ups
+ * (a page that overflows its fixed height, a typo) that don't need the
+ * full-replace semantics of POST /import. */
+r.patch('/books/:slug/spreads/:idx', adminGate, async (req, res) => {
+  const idx = Number(req.params.idx);
+  if (!Number.isInteger(idx) || idx < 0)
+    return res.status(400).json({ error: 'idx must be a non-negative integer' });
+  const { data: book } = await admin.from('books')
+    .select('id').eq('slug', req.params.slug).maybeSingle();
+  if (!book) return res.status(404).json({ error: 'Book not found' });
+
+  const b = req.body || {};
+  const patch = {};
+  for (const field of ['l_kicker', 'l_head', 'l_html', 'r_kicker', 'r_head', 'r_html']) {
+    if (field in b) patch[field] = String(b[field] ?? '');
+  }
+  if (!Object.keys(patch).length)
+    return res.status(400).json({ error: 'Nothing to update' });
+
+  const { data, error } = await admin.from('spreads').update(patch)
+    .eq('book_id', book.id).eq('idx', idx)
+    .select('idx,l_head,r_head').maybeSingle();
+  if (error) return res.status(400).json({ error: error.message });
+  if (!data) return res.status(404).json({ error: `No spread at idx ${idx} for this book` });
+  res.json({ ok: true, ...data });
+});
+
 /* GET /api/admin/books — every book regardless of published state, for
  * the admin panel's book list (the public GET /api/books only returns
  * published ones) */
