@@ -38,9 +38,23 @@ var BACKCOV = { raw: true, cls: 'backcov', html:
 
 /* ---------------- table of contents ---------------- */
 (function buildToc() {
+  /* Split parts between the two TOC columns by chapter COUNT, not by
+   * hardcoded partId names -- books whose parts aren't literally named
+   * p1/p2/p3 (most of them) used to dump every chapter into the right
+   * column alone, overflowing it while the left column sat empty. Whole
+   * parts stay together (never split across columns); greedily fill the
+   * left column, in book order, until it holds about half the chapters,
+   * short by 2 to leave room for its "About/Contents" header rows. */
+  var partCounts = {};
+  BOOK.chapters.forEach(function (c) { partCounts[c.partId] = (partCounts[c.partId] || 0) + 1; });
+  var target = (BOOK.chapters.length - 2) / 2;
+  var leftPartIds = {}, leftCount = 0;
+  BOOK.order.forEach(function (pid) {
+    if (leftCount < target) { leftPartIds[pid] = true; leftCount += partCounts[pid] || 0; }
+  });
   var sides = [[], []];
   BOOK.chapters.forEach(function (c) {
-    sides[(c.partId === 'p1' || c.partId === 'p2' || c.partId === 'p3') ? 0 : 1].push(c);
+    sides[leftPartIds[c.partId] ? 0 : 1].push(c);
   });
   function rows(list) {
     return list.map(function (c) {
