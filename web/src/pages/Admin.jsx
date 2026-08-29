@@ -120,6 +120,17 @@ function BooksPanel() {
     finally { setSaving(''); }
   }
 
+  async function remove(b) {
+    if (!window.confirm(`Permanently delete "${b.title}" and all its chapters/spreads? This cannot be undone.`)) return;
+    setSaving(b.id); setMsg('');
+    try {
+      await api(`/api/admin/books/${b.id}`, { method: 'DELETE' });
+      setMsg(`Deleted "${b.title}"`);
+      load();
+    } catch (e) { setMsg(e.message); }
+    finally { setSaving(''); }
+  }
+
   if (err) return <div className="errbox">{err}</div>;
   if (!books) return <div className="loading-block"><div className="spin"/><span>Loading books…</span></div>;
 
@@ -160,9 +171,14 @@ function BooksPanel() {
                 <span>Published</span>
               </label>
             </div>
-            <button className="btn primary" disabled={saving === b.id} onClick={() => save(b)}>
-              {saving === b.id ? 'Saving…' : 'Save'}
-            </button>
+            <div className="admin-row-actions">
+              <button className="btn primary" disabled={saving === b.id} onClick={() => save(b)}>
+                {saving === b.id ? 'Saving…' : 'Save'}
+              </button>
+              <button className="btn danger" disabled={saving === b.id} onClick={() => remove(b)}>
+                Delete
+              </button>
+            </div>
           </div>
         ))}
         {books.length === 0 && <div className="infobox">No books yet — import one via the CLI script.</div>}

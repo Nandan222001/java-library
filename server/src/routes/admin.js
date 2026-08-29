@@ -166,6 +166,26 @@ r.patch('/books/:id', adminGate, async (req, res) => {
   res.json(data);
 });
 
+/* DELETE /api/admin/books/:id — permanently remove a book and its content.
+ * Every dependent table (book_parts/chapters/spreads/book_purchases/
+ * practice_questions/practice_attempts/reading_progress/book_grants)
+ * cascades from the `books` FK — deleting the book row is enough. The one
+ * exception is `payments.book_id`, which has no cascade on purpose (it's a
+ * financial ledger, never auto-pruned) — if any payment references this
+ * book, Postgres rejects the delete and that FK error is surfaced as-is
+ * rather than silently orphaning/deleting revenue records. */
+r.delete('/books/:id', adminGate, async (req, res) => {
+  const { data: book } = await admin.from('books')
+    .select('id,slug,title').eq('id', req.params.id).maybeSingle();
+  if (!book) return res.status(404).json({ error: 'Book not found' });
+  const { error } = await admin.from('books').delete().eq('id', book.id);
+  if (error) return res.status(409).json({
+    error: error.message,
+    hint: 'A payments record likely still references this book — it cannot be deleted.'
+  });
+  res.json({ ok: true, deleted: book.slug });
+});
+
 /* POST /api/admin/books/:slug/practice/import — full-replace a book's MCQ
  * practice bank, same full-replace-per-slug semantics as POST /import. */
 r.post('/books/:slug/practice/import', adminGate, async (req, res) => {
