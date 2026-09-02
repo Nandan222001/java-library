@@ -1,0 +1,8 @@
+{
+  "name": "Java Library",
+  "description": "A premium educational platform for mastering Java, featuring an interactive flip-book reader and practice quizzes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

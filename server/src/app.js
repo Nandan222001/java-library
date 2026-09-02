@@ -16,12 +16,24 @@ export async function buildApp() {
   const app = express();
 
   if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true, hmr: false },
-      appType: 'spa',
-      root: path.join(process.cwd(), 'web')
-    });
-    app.use(vite.middlewares);
+    console.log('[AI Studio] Initializing Vite dev server...');
+    try {
+      const rootDir = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
+      const webDir = path.join(rootDir, 'web');
+      console.log('[AI Studio] Root dir:', rootDir);
+      console.log('[AI Studio] Web dir:', webDir);
+      
+      const vite = await createViteServer({
+        configFile: path.join(webDir, 'vite.config.js'),
+        server: { middlewareMode: true, hmr: false },
+        appType: 'spa',
+        root: webDir
+      });
+      app.use(vite.middlewares);
+      console.log('[AI Studio] Vite middleware mounted');
+    } catch (e) {
+      console.error('[AI Studio] Failed to initialize Vite:', e);
+    }
   }
 
   app.use(helmet({
@@ -68,8 +80,9 @@ export async function buildApp() {
   app.use('/api/gamification', gamificationRoutes);
 
   if (process.env.NODE_ENV === 'production') {
+    const rootDir = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
+    const distPath = path.join(rootDir, 'web/dist');
     // Serve static files from the web build
-    const distPath = path.join(process.cwd(), 'web/dist');
     app.use(express.static(distPath));
 
     // SPA fallback
