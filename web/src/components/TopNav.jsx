@@ -10,14 +10,15 @@ export default function TopNav() {
 
   useEffect(() => { setOpen(false); }, [loc.pathname]);
 
-  const chip = me?.profile?.role === 'admin'
+  const isAdmin = me?.profile?.role === 'admin';
+  const chip = isAdmin
     ? <span className="chip admin">Admin</span>
     : premium ? <span className="chip premium">Premium</span>
               : <span className="chip free">Free</span>;
 
   return (
     <header className="topnav">
-      <Link to={user ? '/dashboard' : '/'} className="brand">
+      <Link to={isAdmin ? '/admin' : user ? '/dashboard' : '/'} className="brand">
         ☕ Java <i>LIBRARY</i>
       </Link>
       
@@ -33,10 +34,10 @@ export default function TopNav() {
 
       <nav className={open ? 'open' : ''}>
         <NavLink to="/library" end>Library</NavLink>
-        {user && <NavLink to="/dashboard">Dashboard</NavLink>}
+        {user && !isAdmin && <NavLink to="/dashboard">Dashboard</NavLink>}
         <NavLink to="/pricing">Pricing</NavLink>
         {user && <NavLink to="/leaderboard">Leaderboard</NavLink>}
-        {me?.profile?.role === 'admin' && <NavLink to="/admin">Admin</NavLink>}
+        {isAdmin && <NavLink to="/admin">Admin</NavLink>}
         
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '12px', borderLeft: '1px solid var(--line)', paddingLeft: '24px' }}>

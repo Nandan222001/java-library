@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../lib/supabase.js';
 
 /* User dashboard — role-aware. Shows the reader's own stats, current books,
- * gamification progress, and the features their role unlocks. */
+ * gamification progress, and the features their role unlocks.
+ *
+ * Admins never see this page: it redirects straight to /admin. This is
+ * deliberately a component-level guard (not just a one-time redirect at
+ * login) so it also catches every OTHER way an admin can land here —
+ * clicking the brand logo, a stale bookmark, browser back/forward. */
 export default function Dashboard() {
   const { me, role } = useAuth();
   const [books, setBooks] = useState(null);
@@ -13,6 +18,11 @@ export default function Dashboard() {
   useEffect(() => {
     api('/api/books').then(setBooks).catch(e => setErr(e.message));
   }, []);
+
+  /* `role` defaults to 'reader' until `me` loads, so gate on `me` itself —
+   * otherwise every admin flashes the reader dashboard for a moment first. */
+  if (!me) return <div className="container loading-block"><div className="spin"/><span>Loading…</span></div>;
+  if (role === 'admin') return <Navigate to="/admin" replace />;
 
   if (err) return <div className="container"><div className="errbox">{err}</div></div>;
 
