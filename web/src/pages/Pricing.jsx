@@ -98,8 +98,7 @@ export default function Pricing() {
           const premium = p.price_paise > 0;
           return (
             <div key={p.plan_id}
-                 className={'card plan-card' + (premium ? '' : '')}
-                 style={premium ? { borderColor: '#c9a22788' } : undefined}>
+                 className={'card plan-card' + (premium ? ' featured' : '')}>
               <h3>{p.name}</h3>
               <div className="price">
                 {p.price_paise === 0 ? '₹0'
