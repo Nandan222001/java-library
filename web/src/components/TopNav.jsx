@@ -8,9 +8,6 @@ export default function TopNav() {
   const loc = useLocation();
   const [open, setOpen] = useState(false);
 
-  /* narrow screens have no room for brand + Library + Pricing + role chip +
-   * account link + sign out in one row (they were clipping off-screen,
-   * making sign-out unreachable on mobile) -- collapse into a dropdown */
   useEffect(() => { setOpen(false); }, [loc.pathname]);
 
   const chip = me?.profile?.role === 'admin'
@@ -20,28 +17,68 @@ export default function TopNav() {
 
   return (
     <header className="topnav">
-      <Link to={user ? '/dashboard' : '/'} className="brand">☕ Java <i>LIBRARY</i></Link>
-      <button className="nav-toggle" aria-label="Menu" aria-expanded={open}
-              onClick={() => setOpen(o => !o)}>
+      <Link to={user ? '/dashboard' : '/'} className="brand">
+        ☕ Java <i>LIBRARY</i>
+      </Link>
+      
+      <button 
+        className="nav-toggle" 
+        aria-label="Toggle navigation" 
+        aria-expanded={open}
+        onClick={() => setOpen(o => !o)}
+        style={{ marginLeft: 'auto', display: 'none', background: 'transparent', border: 'none', color: 'inherit', fontSize: '24px', cursor: 'pointer' }}
+      >
         {open ? '✕' : '☰'}
       </button>
+
       <nav className={open ? 'open' : ''}>
-        {/* NavLink (not Link) so `end` and the .active CSS highlight
-            actually work -- both were previously no-ops on a plain Link */}
         <NavLink to="/library" end>Library</NavLink>
         {user && <NavLink to="/dashboard">Dashboard</NavLink>}
         <NavLink to="/pricing">Pricing</NavLink>
         {user && <NavLink to="/leaderboard">Leaderboard</NavLink>}
         {me?.profile?.role === 'admin' && <NavLink to="/admin">Admin</NavLink>}
-        {user && <>
-          {chip}
-          <NavLink to="/account">{me?.profile?.display_name || user.email}</NavLink>
-          <button className="btn ghost"
-                  onClick={async () => { await signOut(); nav('/login'); }}>
-            Sign out
-          </button>
-        </>}
+        
+        {user ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '12px', borderLeft: '1px solid var(--line)', paddingLeft: '24px' }}>
+            {chip}
+            <NavLink to="/account" style={{ color: 'var(--ink)' }}>
+              {me?.profile?.display_name || user.email.split('@')[0]}
+            </NavLink>
+            <button 
+              className="btn ghost" 
+              style={{ padding: '6px 12px', fontSize: '14px' }}
+              onClick={async () => { await signOut(); nav('/login'); }}
+            >
+              Sign out
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: '10px', marginLeft: '12px' }}>
+            <Link to="/login" className="btn ghost" style={{ padding: '8px 16px', fontSize: '14px' }}>Login</Link>
+            <Link to="/signup" className="btn primary" style={{ padding: '8px 16px', fontSize: '14px' }}>Sign Up</Link>
+          </div>
+        )}
       </nav>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media (max-width: 900px) {
+          .nav-toggle { display: block !important; }
+          .topnav nav { 
+            position: fixed; top: 72px; left: 0; right: 0; 
+            flex-direction: column; background: var(--bg); 
+            padding: var(--space-lg); border-bottom: 1px solid var(--line);
+            max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
+            align-items: flex-start; gap: 4px;
+          }
+          .topnav nav.open { max-height: 100vh; }
+          .topnav nav div { 
+            margin-left: 0 !important; border-left: none !important; 
+            padding-left: 0 !important; padding-top: 12px; 
+            margin-top: 12px; border-top: 1px solid var(--line); 
+            width: 100%; flex-wrap: wrap;
+          }
+        }
+      `}} />
     </header>
   );
 }

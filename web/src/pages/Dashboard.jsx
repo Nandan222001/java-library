@@ -28,15 +28,16 @@ export default function Dashboard() {
 
   return (
     <div className="container">
-      <div className="dash-hello">
+      <header className="dash-hello">
         <div>
-          <h1 style={{ margin: 0 }}>
+          <h1>
             {firstName
               ? `Welcome back, ${firstName} ☕`
               : 'Welcome back ☕'}
           </h1>
-          <p className="muted" style={{ margin: '4px 0 0' }}>
-            Your library at a glance —{isStaff
+          <p className="muted">
+            Your library at a glance —
+            {isStaff
               ? ' staff account, every book unlocked.'
               : me?.entitlements?.premium
                 ? ' premium reader.'
@@ -48,102 +49,105 @@ export default function Dashboard() {
           : me?.entitlements?.premium ? 'premium' : 'free')}>
           {role}{me?.entitlements?.premium ? ' · premium' : ''}
         </span>
-      </div>
+      </header>
 
       <div className="dash-stats">
-        <div className="stat-card">
+        <div className="stat-card card">
           <div className="stat-label">Books unlocked</div>
-          <div className="stat-num">{unlocked.length}<span className="stat-sub">/{list.length}</span></div>
+          <div className="stat-num">{unlocked.length}<span className="stat-sub" style={{ fontSize: '18px', color: 'var(--ink-muted)' }}>/{list.length}</span></div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card card">
           <div className="stat-label">Practice points</div>
           <div className="stat-num">{me?.points ?? 0}</div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card card">
           <div className="stat-label">Current streak</div>
           <div className="stat-num">{me?.current_streak ?? 0} 🔥</div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card card">
           <div className="stat-label">Badges earned</div>
           <div className="stat-num">{me?.badges?.length ?? 0}</div>
         </div>
-        <Link to="/leaderboard" className="stat-card stat-link">
+        <Link to="/leaderboard" className="stat-card card stat-link">
           <div className="stat-label">Leaderboard</div>
           <div className="stat-num">🏆</div>
         </Link>
       </div>
+
       {books && continuing.length > 0 && (
-        <section className="dash-section">
-          <h2>↪ Continue reading</h2>
+        <section className="dash-section" style={{ marginTop: 'var(--space-3xl)' }}>
+          <h2 style={{ marginBottom: 'var(--space-lg)' }}>↪ Continue reading</h2>
           <div className="grid-books">
             {continuing.map(b => (
               <Link key={b.id} to={`/read/${b.slug}?p=${b.continue_flips}`} className="card book-card">
-                <span style={{ fontSize: 38 }}>{b.cover_emoji}</span>
-                <h3 style={{ margin: 0 }}>{b.title}</h3>
-                <span className="chip" style={{ background: '#82aaff1f', color: '#b9cfff', marginTop: 'auto' }}>
-                  ↩ resume p.{b.continue_flips * 2}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span className="emoji" style={{ fontSize: '32px' }}>{b.cover_emoji}</span>
+                  <span className="chip" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
+                    Resume p.{b.continue_flips * 2}
+                  </span>
+                </div>
+                <h3>{b.title}</h3>
               </Link>
             ))}
           </div>
         </section>
       )}
 
-      <div className="dash-cols">
+      <div className="dash-cols" style={{ marginTop: 'var(--space-3xl)' }}>
         <section className="card dash-panel">
-          <h3 style={{ marginTop: 0 }}>🎯 Role &amp; permissions</h3>
-          <ul className="dash-perms">
-            <li><b>reader</b> — read every <b>free</b> book + books you bought or were granted.</li>
-            <li><b>premium</b> — all premium books, full-text search, new releases first.</li>
-            <li><b>publisher</b> — staff access: every book incl. unpublished previews; manage content.</li>
-            <li><b>admin</b> — everything + the full admin dashboard, users, billing and read grants.</li>
+          <h3>🎯 Role &amp; permissions</h3>
+          <ul className="dash-perms" style={{ listStyle: 'none', padding: 0 }}>
+            <li style={{ padding: '8px 0', borderBottom: '1px solid var(--line)' }}><b style={{ color: '#fff' }}>reader</b> — all free books + owned content.</li>
+            <li style={{ padding: '8px 0', borderBottom: '1px solid var(--line)' }}><b style={{ color: 'var(--gold)' }}>premium</b> — all premium content + new releases first.</li>
+            <li style={{ padding: '8px 0', borderBottom: '1px solid var(--line)' }}><b style={{ color: 'var(--accent)' }}>publisher</b> — staff access: preview unpublished content.</li>
+            <li style={{ padding: '8px 0' }}><b style={{ color: '#769eff' }}>admin</b> — full platform control & analytics.</li>
           </ul>
-          <div className="dash-actions">
+          <div className="dash-actions" style={{ marginTop: 'auto', paddingTop: '20px' }}>
             <Link className="btn primary" to={locked.length ? '/pricing' : '/library'}>
               {locked.length ? `Unlock ${locked.length} more book${locked.length === 1 ? '' : 's'} →` : 'Browse library →'}
             </Link>
             {unlocked[0] && (
               <Link className="btn ghost" to={`/books/${unlocked[0].slug}/practice`}>🎯 Practice</Link>
             )}
-            <Link className="btn ghost" to="/account">Account</Link>
           </div>
         </section>
 
         <section className="card dash-panel">
-          <h3 style={{ marginTop: 0 }}>
+          <h3>
             {role === 'admin' ? '🛠️ Admin workspace'
              : role === 'publisher' ? '🖋️ Publisher workspace'
              : '✨ Your progress'}
           </h3>
-          {role === 'admin' && (
-            <p className="muted">
-              You run the platform — manage books, plans, users, read-permission
-              grants, email and watch live sales on the admin dashboard.
-            </p>
-          )}
-          {role === 'publisher' && (
-            <p className="muted">
-              As a publisher every book is unlocked for you, including unpublished
-              previews. Use the import CLI or coordinate with an admin for the
-              content management panel.
-            </p>
-          )}
-          {role === 'reader' && (
-            <p className="muted">
-              Answer <b>practice quizzes</b> under any book to earn points, keep
-              weekly streaks and collect badges — then climb the leaderboard.
-            </p>
-          )}
-          {me?.badges?.length > 0 && (
-            <div className="pillrow" style={{ margin: '10px 0 0' }}>
-              {me.badges.slice(0, 6).map(b => (
-                <span key={b.id} className="chip premium" title={b.description}>
-                  {b.icon} {b.label}
-                </span>
-              ))}
-            </div>
-          )}
-          <div className="dash-actions">
+          <div style={{ flex: 1 }}>
+            {role === 'admin' && (
+              <p className="muted">
+                You run the platform — manage books, plans, users, read-permission
+                grants, and monitor live sales on the admin dashboard.
+              </p>
+            )}
+            {role === 'publisher' && (
+              <p className="muted">
+                As a publisher every book is unlocked for you, including unpublished
+                previews. Manage content via the import CLI or coordinated panel.
+              </p>
+            )}
+            {role === 'reader' && (
+              <p className="muted">
+                Answer <strong>practice quizzes</strong> under any book to earn points, keep
+                weekly streaks and collect badges — then climb the leaderboard.
+              </p>
+            )}
+            {me?.badges?.length > 0 && (
+              <div className="pillrow" style={{ marginTop: '16px' }}>
+                {me.badges.slice(0, 6).map(b => (
+                  <span key={b.id} className="chip premium" title={b.description}>
+                    {b.icon} {b.label}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="dash-actions" style={{ marginTop: 'auto', paddingTop: '20px' }}>
             {role === 'admin' && <Link className="btn primary" to="/admin">Open admin dashboard →</Link>}
             <Link className="btn ghost" to="/library">Library</Link>
             <Link className="btn ghost" to="/pricing">Plans</Link>

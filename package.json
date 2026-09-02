@@ -1,0 +1,16 @@
+{
+  "name": "java-library-root",
+  "private": true,
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=server",
+    "build": "npm run build --workspace=web",
+    "start": "NODE_ENV=production npm run start --workspace=server"
+  },
+  "dependencies": {
+    "vite": "^8.2.2"
+  }
+}

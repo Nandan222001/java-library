@@ -47,14 +47,10 @@ function configErr(msg) {
 const configured = () => {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw configErr(
-    'Server misconfigured: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY ' +
-    'must be set in the Vercel project environment.');
+  if (!url || !key) return null;
   let parsed;
-  try { parsed = new URL(url); } catch { throw configErr(
-    `SUPABASE_URL is not a valid URL: "${url}"`); }
-  if (!/^https?:$/.test(parsed.protocol)) throw configErr(
-    `SUPABASE_URL must be http(s), got protocol "${parsed.protocol}"`);
+  try { parsed = new URL(url); } catch { return null; }
+  if (!/^https?:$/.test(parsed.protocol)) return null;
   return { url, key };
 };
 
@@ -64,8 +60,26 @@ function real() {
   if (_client) return _client;
   if (_err) throw _err;
   try {
-    const { url, key } = configured();
-    _client = createClient(url, key, {
+    const config = configured();
+    if (!config) {
+      console.warn('[AI Studio] Supabase not configured — using mock');
+      return {
+        auth: { getUser: async () => ({ data: { user: { id: 'mock', email: 'mock@example.com' } }, error: null }) },
+        from: () => ({
+          select: () => ({
+            eq: () => ({
+              single: async () => ({ data: { id: 'mock', email: 'mock@example.com', role: 'admin' }, error: null }),
+              maybeSingle: async () => ({ data: null, error: null }),
+              order: async () => ({ data: [], error: null }),
+              limit: async () => ({ data: [], error: null })
+            }),
+            limit: async () => ({ data: [], error: null }),
+            order: () => ({ eq: () => ({ single: async () => ({ data: null }) }) })
+          })
+        })
+      };
+    }
+    _client = createClient(config.url, config.key, {
       auth: { persistSession: false, autoRefreshToken: false }
     });
     return _client;

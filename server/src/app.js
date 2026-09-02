@@ -1,6 +1,8 @@
 import express from 'express';
+import path from 'path';
 import helmet from 'helmet';
 import cors from 'cors';
+import { createServer as createViteServer } from 'vite';
 import meRoutes from './routes/me.js';
 import libraryRoutes from './routes/library.js';
 import billingRoutes, { webhookHandler } from './routes/billing.js';
@@ -10,10 +12,21 @@ import gamificationRoutes from './routes/gamification.js';
 
 /** Build the Express app WITHOUT binding a port. Exporting `app` lets Vercel
  *  wrap it as a serverless function while `index.js` (local dev) calls listen. */
-export function buildApp() {
+export async function buildApp() {
   const app = express();
 
-  app.use(helmet());
+  if (process.env.NODE_ENV !== 'production') {
+    const vite = await createViteServer({
+      server: { middlewareMode: true, hmr: false },
+      appType: 'spa',
+      root: path.join(process.cwd(), 'web')
+    });
+    app.use(vite.middlewares);
+  }
+
+  app.use(helmet({
+    contentSecurityPolicy: false
+  }));
   app.use(cors({
     origin: (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
       .split(',').map(s => s.trim()),
@@ -54,7 +67,19 @@ export function buildApp() {
   app.use('/api/admin', adminRoutes);
   app.use('/api/gamification', gamificationRoutes);
 
-  app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
+  if (process.env.NODE_ENV === 'production') {
+    // Serve static files from the web build
+    const distPath = path.join(process.cwd(), 'web/dist');
+    app.use(express.static(distPath));
+
+    // SPA fallback
+    app.get('*', (req, res) => {
+      if (req.path.startsWith('/api/')) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  }
 
   // eslint-disable-next-line no-unused-vars
   app.use((err, _req, res, _next) => {
@@ -65,5 +90,3 @@ export function buildApp() {
 
   return app;
 }
-
-export default buildApp();

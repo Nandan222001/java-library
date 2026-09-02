@@ -64,51 +64,70 @@ export default function Library() {
 
   return (
     <div className="container">
-      <h1>Your library 📚</h1>
-      <p className="muted" style={{ marginTop: -6 }}>
-        Theory on the left page, drills and dry-runs on the right. Tap a cover to open the reader.
-      </p>
+      <header style={{ marginBottom: 'var(--space-2xl)' }}>
+        <h1>Your library 📚</h1>
+        <p className="muted" style={{ maxWidth: '600px' }}>
+          Theory on the left page, drills and dry-runs on the right. Tap a cover to open the reader and begin your journey.
+        </p>
+      </header>
+
       {buyMsg && <div className={buyMsg.t === 'ok' ? 'infobox' : 'errbox'}>{buyMsg.m}</div>}
 
-      <div className="grid-books" style={{ marginTop: 26 }}>
+      <div className="grid-books">
         {books.map(b => (
           <div key={b.id} className="card book-card"
                onClick={() => nav(`/read/${b.slug}${b.continue_flips ? `?p=${b.continue_flips}` : ''}`)}>
-            <div className="book-card-head">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span className="emoji">{b.cover_emoji}</span>
               {b.tier === 'premium'
-                ? <span className={'chip premium locked-badge'}>{b.locked ? '🔒 Premium' : 'Premium ✓'}</span>
-                : <span className="chip free locked-badge">Free</span>}
+                ? <span className={'chip premium'}>{b.locked ? '🔒 Premium' : 'Premium ✓'}</span>
+                : <span className="chip free">Free</span>}
             </div>
-            <h3 style={{ margin: 0 }}>{b.title}</h3>
-            <div className="sub">{b.subtitle}</div>
-            <div className="book-card-foot">
-              {b.continue_flips > 0
-                && <span className="chip resume">↩ resume p.{b.continue_flips * 2}</span>}
-              <span className="book-card-author">{b.author || '—'}</span>
-              {b.locked && b.price_paise > 0 &&
-                <button className="btn primary" style={{ marginLeft: 'auto', padding: '6px 12px', fontSize: 13 }}
+            
+            <div style={{ flex: 1 }}>
+              <h3>{b.title}</h3>
+              <p className="sub">{b.subtitle}</p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderTop: '1px solid var(--line)', paddingTop: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span className="muted" style={{ fontSize: '14px', fontFamily: 'Fira Code' }}>{b.author || 'Anonymous'}</span>
+                {b.continue_flips > 0 && (
+                  <span className="chip" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
+                    Resume p.{b.continue_flips * 2}
+                  </span>
+                )}
+              </div>
+
+              {b.locked && b.price_paise > 0 ? (
+                <button className="btn primary" style={{ width: '100%', padding: '10px' }}
                         disabled={buying === b.id}
                         onClick={e => buy(e, b)}>
-                  {buying === b.id ? 'Unlocking…' : `Buy for ₹${(b.price_paise / 100).toLocaleString('en-IN')}`}
-                </button>}
-              {!b.locked &&
-                <Link to={`/books/${b.slug}/practice`} className="btn ghost"
-                      style={{ marginLeft: 'auto', padding: '6px 12px', fontSize: 13 }}
+                  {buying === b.id ? 'Unlocking…' : `Unlock for ₹${(b.price_paise / 100).toLocaleString('en-IN')}`}
+                </button>
+              ) : (
+                <Link to={`/books/${b.slug}/practice`} className="btn"
+                      style={{ width: '100%', padding: '10px' }}
                       onClick={e => e.stopPropagation()}>
-                  🎯 Practice
-                </Link>}
+                  🎯 Practice Mode
+                </Link>
+              )}
             </div>
           </div>
         ))}
       </div>
 
-      {books.length === 0 &&
-        <div className="infobox">No published books yet — run the import script or add one via /api/admin/import.</div>}
+      {books.length === 0 && (
+        <div className="infobox" style={{ marginTop: 'var(--space-xl)' }}>
+          No published books yet — run the import script or add one via the admin panel.
+        </div>
+      )}
 
-      <p className="muted" style={{ marginTop: 30 }}>
-        Tip: press ☆ Mark inside the reader to bookmark spreads; they appear in its Contents drawer.
-      </p>
+      <footer style={{ marginTop: 'var(--space-3xl)', borderTop: '1px solid var(--line)', paddingTop: 'var(--space-xl)' }}>
+        <p className="muted" style={{ fontSize: '14px' }}>
+          <strong>Pro Tip:</strong> Use the <strong>☆ Mark</strong> feature inside the reader to save key concepts. Bookmarks are easily accessible from the Contents drawer.
+        </p>
+      </footer>
     </div>
   );
 }

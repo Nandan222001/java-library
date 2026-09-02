@@ -76,62 +76,96 @@ export default function Pricing() {
   if (!plans) return <div className="container loading-block"><div className="spin"/><span>Loading plans…</span></div>;
 
   return (
-    <div className="container" style={{ maxWidth: 960 }}>
-      <h1 style={{ textAlign: 'center' }}>Plans &amp; Pricing</h1>
-      <p className="muted" style={{ textAlign: 'center' }}>
-        {pg?.provider === 'razorpay'
-          ? 'Payments are processed securely by Razorpay.'
-          : 'Sandbox billing — no card is charged while payments are in test mode.'}
-      </p>
+    <div className="container" style={{ maxWidth: 1080 }}>
+      <header style={{ textAlign: 'center', marginBottom: 'var(--space-3xl)' }}>
+        <h1 style={{ fontSize: '3.5rem', marginBottom: '12px' }}>Choose your path</h1>
+        <p className="muted" style={{ fontSize: '18px', maxWidth: '600px', margin: '0 auto' }}>
+          {pg?.provider === 'razorpay'
+            ? 'Unlock the full library and mastering tools. Secure payments via Razorpay.'
+            : 'Sandbox billing active — enjoy full access in test mode with no real charges.'}
+        </p>
+      </header>
 
-      {me?.entitlements?.staff &&
-        <div className="infobox" style={{ textAlign: 'center' }}>
-          Your account has staff privileges — all books are unlocked automatically.
-        </div>}
+      {me?.entitlements?.staff && (
+        <div className="infobox" style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 40px' }}>
+          <strong>Staff Account:</strong> Every book and feature is automatically unlocked for you.
+        </div>
+      )}
 
-      {msg && <div className={msg.t === 'ok' ? 'infobox' : 'errbox'} style={{ maxWidth: 560, margin: '0 auto 10px' }}>{msg.m}</div>}
+      {msg && (
+        <div className={msg.t === 'ok' ? 'infobox' : 'errbox'} style={{ maxWidth: 560, margin: '0 auto 20px' }}>
+          {msg.m}
+        </div>
+      )}
 
       <div className="price-grid">
         {plans.map(p => {
-          const current = activeId === p.plan_id ||
-            (p.plan_id === 'free' && !activeId);
-          const premium = p.price_paise > 0;
+          const current = activeId === p.plan_id || (p.plan_id === 'free' && !activeId);
+          const isFeatured = p.price_paise > 0;
           return (
-            <div key={p.plan_id}
-                 className={'card plan-card' + (premium ? ' featured' : '')}>
-              <h3>{p.name}</h3>
+            <div 
+              key={p.plan_id}
+              className={`card plan-card ${isFeatured ? 'featured' : ''}`}
+            >
+              {isFeatured && (
+                <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: 'var(--accent)', color: '#fff', padding: '4px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: '800', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                  Recommended
+                </div>
+              )}
+              <h3 style={{ fontSize: '1.6rem' }}>{p.name}</h3>
               <div className="price">
-                {p.price_paise === 0 ? '₹0'
-                  : `₹${(p.price_paise / 100).toLocaleString('en-IN')}`}
+                {p.price_paise === 0 ? '₹0' : `₹${(p.price_paise / 100).toLocaleString('en-IN')}`}
               </div>
-              <div className="muted">{premium
-                ? `per ${p.interval_days >= 365 ? 'year' : 'month'}`
-                : 'forever'}</div>
-              <ul>
-                {(p.features || []).map(f => <li key={f}>{f}</li>)}
+              <div className="muted" style={{ marginBottom: '24px' }}>
+                {p.price_paise === 0 ? 'for casual reading' : `per ${p.interval_days >= 365 ? 'year' : 'month'}`}
+              </div>
+              
+              <ul style={{ flex: 1 }}>
+                {(p.features || []).map(f => (
+                  <li key={f}>{f}</li>
+                ))}
               </ul>
-              {current
-                ? <button className="btn" disabled>✓ Current plan</button>
-                : premium
-                  ? <button className="btn primary" disabled={!!busy}
-                            onClick={() => checkout(p.plan_id)}>
-                      {busy === p.plan_id ? 'Processing…' : 'Subscribe'}
-                    </button>
-                  : <Link to="/library" className="btn ghost">Browse free books</Link>}
+
+              <div style={{ marginTop: '24px' }}>
+                {current ? (
+                  <button className="btn" disabled style={{ width: '100%', opacity: 0.8 }}>
+                    ✓ Current Plan
+                  </button>
+                ) : isFeatured ? (
+                  <button 
+                    className="btn primary" 
+                    disabled={!!busy}
+                    style={{ width: '100%' }}
+                    onClick={() => checkout(p.plan_id)}
+                  >
+                    {busy === p.plan_id ? 'Processing…' : 'Get Started'}
+                  </button>
+                ) : (
+                  <Link to="/library" className="btn ghost" style={{ width: '100%' }}>
+                    Browse Library
+                  </Link>
+                )}
+              </div>
             </div>
           );
         })}
       </div>
 
-      {me?.subscription &&
-        <p className="muted" style={{ textAlign: 'center', marginTop: 22 }}>
-          Active until{' '}
-          {new Date(me.subscription.current_end).toLocaleDateString()} ·{' '}
-          <button className="btn danger"
-                  disabled={busy === 'cancel'} onClick={cancel}>
+      {me?.subscription && (
+        <footer style={{ textAlign: 'center', marginTop: '60px', borderTop: '1px solid var(--line)', paddingTop: '40px' }}>
+          <p className="muted">
+            Subscription active until <strong>{new Date(me.subscription.current_end).toLocaleDateString()}</strong>
+          </p>
+          <button 
+            className="btn danger ghost"
+            style={{ marginTop: '12px' }}
+            disabled={busy === 'cancel'} 
+            onClick={cancel}
+          >
             Cancel auto-renewal
           </button>
-        </p>}
+        </footer>
+      )}
     </div>
   );
 }

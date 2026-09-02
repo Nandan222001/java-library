@@ -15,7 +15,7 @@ export async function currentJwt() {
   return data.session?.access_token || null;
 }
 
-const BASE = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+const BASE = (import.meta.env.VITE_API_URL || 'https://java-library.vercel.app').replace(/\/+$/, '');
 
 /** Authenticated JSON fetch against the Node API. */
 export async function api(path, opts = {}) {
