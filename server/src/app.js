@@ -1,8 +1,6 @@
 import express from 'express';
-import path from 'path';
 import helmet from 'helmet';
 import cors from 'cors';
-import { createServer as createViteServer } from 'vite';
 import meRoutes from './routes/me.js';
 import libraryRoutes from './routes/library.js';
 import billingRoutes, { webhookHandler } from './routes/billing.js';
@@ -12,33 +10,10 @@ import gamificationRoutes from './routes/gamification.js';
 
 /** Build the Express app WITHOUT binding a port. Exporting `app` lets Vercel
  *  wrap it as a serverless function while `index.js` (local dev) calls listen. */
-export async function buildApp() {
+export function buildApp() {
   const app = express();
 
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('[AI Studio] Initializing Vite dev server...');
-    try {
-      const rootDir = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
-      const webDir = path.join(rootDir, 'web');
-      console.log('[AI Studio] Root dir:', rootDir);
-      console.log('[AI Studio] Web dir:', webDir);
-      
-      const vite = await createViteServer({
-        configFile: path.join(webDir, 'vite.config.js'),
-        server: { middlewareMode: true, hmr: false },
-        appType: 'spa',
-        root: webDir
-      });
-      app.use(vite.middlewares);
-      console.log('[AI Studio] Vite middleware mounted');
-    } catch (e) {
-      console.error('[AI Studio] Failed to initialize Vite:', e);
-    }
-  }
-
-  app.use(helmet({
-    contentSecurityPolicy: false
-  }));
+  app.use(helmet());
   app.use(cors({
     origin: (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
       .split(',').map(s => s.trim()),
@@ -79,20 +54,7 @@ export async function buildApp() {
   app.use('/api/admin', adminRoutes);
   app.use('/api/gamification', gamificationRoutes);
 
-  if (process.env.NODE_ENV === 'production') {
-    const rootDir = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
-    const distPath = path.join(rootDir, 'web/dist');
-    // Serve static files from the web build
-    app.use(express.static(distPath));
-
-    // SPA fallback
-    app.get('*', (req, res) => {
-      if (req.path.startsWith('/api/')) {
-        return res.status(404).json({ error: 'Not found' });
-      }
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
+  app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
 
   // eslint-disable-next-line no-unused-vars
   app.use((err, _req, res, _next) => {
@@ -103,3 +65,5 @@ export async function buildApp() {
 
   return app;
 }
+
+export default buildApp();
