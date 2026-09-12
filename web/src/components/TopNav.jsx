@@ -24,17 +24,17 @@ export default function TopNav() {
   );
 
   return (
+    <>
     <header className="topnav">
       <Link to={isAdmin ? '/admin' : user ? '/dashboard' : '/'} className="brand">
         ☕ Java <i>LIBRARY</i>
       </Link>
-      
-      <button 
-        className="nav-toggle" 
-        aria-label="Toggle navigation" 
+
+      <button
+        className="nav-toggle"
+        aria-label="Toggle navigation"
         aria-expanded={open}
         onClick={() => setOpen(o => !o)}
-        style={{ marginLeft: 'auto', display: 'none', background: 'transparent', border: 'none', color: 'inherit', fontSize: '24px', cursor: 'pointer' }}
       >
         {open ? '✕' : '☰'}
       </button>
@@ -80,26 +80,15 @@ export default function TopNav() {
           </div>
         )}
       </nav>
-
-      <style dangerouslySetInnerHTML={{ __html: `
-        @media (max-width: 900px) {
-          .nav-toggle { display: block !important; }
-          .topnav nav { 
-            position: fixed; top: 72px; left: 0; right: 0; 
-            flex-direction: column; background: var(--bg); 
-            padding: var(--space-lg); border-bottom: 1px solid var(--line);
-            max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
-            align-items: flex-start; gap: 4px;
-          }
-          .topnav nav.open { max-height: 100vh; }
-          .topnav nav div { 
-            margin-left: 0 !important; border-left: none !important; 
-            padding-left: 0 !important; padding-top: 12px; 
-            margin-top: 12px; border-top: 1px solid var(--line); 
-            width: 100%; flex-wrap: wrap;
-          }
-        }
-      `}} />
     </header>
+
+    {/* Click-outside-to-close backdrop. Rendered as a SIBLING of <header>, not
+        a child — <header> has backdrop-filter, which makes it the containing
+        block for any position:fixed descendant, so an overlay nested inside
+        it with bottom:0 silently resolves to zero height (it collapses
+        against the 72px header box, not the viewport). Kept outside for the
+        same reason .admin-overlay lives outside its own filtered ancestor. */}
+    {open && <div className="nav-overlay" onClick={() => setOpen(false)}/>}
+    </>
   );
 }

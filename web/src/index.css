@@ -129,8 +129,13 @@ p { margin: 0 0 1.25em; }
   content: ''; position: absolute; left: 15px; right: 15px; bottom: 2px; height: 2px;
   border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent-2));
 }
-.nav-toggle { border-radius: var(--radius-sm); }
-.nav-toggle:hover { background: #ffffff0a !important; }
+.nav-toggle {
+  display: none; margin-left: auto; width: 38px; height: 38px; flex: 0 0 auto;
+  align-items: center; justify-content: center; background: transparent; border: none;
+  color: inherit; font-size: 22px; line-height: 1; cursor: pointer; border-radius: var(--radius-sm);
+}
+.nav-toggle:hover { background: #ffffff0a; }
+.nav-overlay { position: fixed; inset: 72px 0 0 0; z-index: 99; background: rgba(0, 0, 0, .55); backdrop-filter: blur(2px); }
 
 /* ---------- buttons ---------- */
 .btn {
@@ -422,14 +427,21 @@ p { margin: 0 0 1.25em; }
   .admin-main { margin-left: 0; }
   .container { padding-top: 80px; }
 }
-@media (max-width: 680px) {
+@media (max-width: 900px) {
+  .nav-toggle { display: flex; }
   .topnav nav {
-    position: fixed; top: 72px; left: 0; right: 0; flex-direction: column;
-    background: var(--bg); border-bottom: 1px solid var(--line); padding: var(--space-md);
-    max-height: 0; overflow: hidden; transition: max-height .3s var(--ease);
+    position: fixed; top: 72px; left: 0; right: 0; z-index: 100; flex-direction: column;
+    align-items: flex-start; gap: 2px; background: var(--bg); border-bottom: 1px solid var(--line);
+    padding: var(--space-md); max-height: 0; overflow-y: auto; overflow-x: hidden;
+    transition: max-height .3s var(--ease); box-shadow: var(--shadow-lg);
   }
-  .topnav nav.open { max-height: 400px; }
+  .topnav nav.open { max-height: calc(100vh - 72px); }
+  .topnav nav a { width: 100%; }
   .topnav nav a.active::after { display: none; }
+  .topnav nav > div {
+    width: 100%; margin: 8px 0 0 !important; padding: 12px 0 0 !important; border-left: none !important;
+    border-top: 1px solid var(--line); flex-wrap: wrap;
+  }
   h1 { font-size: 2rem; }
   .plan-card.featured { transform: none; }
 }
