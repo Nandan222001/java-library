@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../lib/supabase.js';
 import { AmbientVideo, CountUp, Reveal, prefersReducedMotion } from '../components/Reveal.jsx';
 import { BOOKS, FAQS, FEATURES, PLANS_FALLBACK, STATS, STEPS, TOPICS } from '../lib/landingContent.js';
+import { Money } from '../lib/money.jsx';
 import '../landing.css';
 
 /* Headline rendered word-by-word so each word can swing in on its own delay.
@@ -13,13 +14,11 @@ const H1_WORDS = [
   { t: 'one' }, { t: 'flipped' }, { t: 'page' }, { t: 'at' }, { t: 'time.' },
 ];
 
-const rupeees = paise => `₹${(paise / 100).toLocaleString('en-IN')}`;
-
 function priceLabel(plan) {
-  if (!plan.price_paise) return { amount: '₹0', period: 'forever' };
-  if (plan.interval_days === 365) return { amount: rupeees(plan.price_paise), period: '/ year' };
-  if (plan.interval_days === 30) return { amount: rupeees(plan.price_paise), period: '/ month' };
-  return { amount: rupeees(plan.price_paise), period: `/${plan.interval_days}d` };
+  if (!plan.price_paise) return { paise: 0, period: 'forever' };
+  if (plan.interval_days === 365) return { paise: plan.price_paise, period: '/ year' };
+  if (plan.interval_days === 30) return { paise: plan.price_paise, period: '/ month' };
+  return { paise: plan.price_paise, period: `/${plan.interval_days}d` };
 }
 
 export default function Landing() {
@@ -368,7 +367,7 @@ export default function Landing() {
 
           <div className="lp-plans">
             {plans.map((p, i) => {
-              const { amount, period } = priceLabel(p);
+              const { paise, period } = priceLabel(p);
               const featured = p.interval_days === 365;
               return (
                 <Reveal key={p.plan_id} className="lp-plan-wrap" delay={i * 90}>
@@ -376,7 +375,7 @@ export default function Landing() {
                     {featured && <span className="ribbon">Best value · 2 months free</span>}
                     <span className="pname">{p.name}</span>
                     <div className="pprice">
-                      {amount} <small>{period}</small>
+                      <Money paise={paise}/> <small>{period}</small>
                     </div>
                     <ul>
                       {(p.features || []).map(f => <li key={f}>{f}</li>)}

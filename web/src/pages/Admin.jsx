@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../lib/supabase.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import { Money } from '../lib/money.jsx';
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊', desc: 'Revenue, signups & activity', group: 'Overview' },
@@ -53,7 +54,7 @@ export default function Admin() {
         </nav>
 
         <div className="admin-sb-foot">
-          <Link className="btn ghost sb-back" to="/dashboard">← Back to library</Link>
+          <Link className="btn ghost sb-back" to="/library">← Back to library</Link>
           <button className="btn ghost sb-signout"
                   onClick={async () => { await signOut(); nav('/login'); }}>
             Sign out
@@ -422,7 +423,6 @@ function DashboardPanel() {
   if (!st) return <div className="loading-block"><div className="spin"/><span>Crunching the numbers…</span></div>;
 
   const t = st.totals;
-  const inr = n => '₹' + (n / 100).toLocaleString('en-IN');
   const rev = (st.sales_series || []).map(s => ({ label: s.label, value: s.revenue_paise }));
   const sign = (st.signups_series || []).map(s => ({ label: s.label, value: s.signups }));
 
@@ -443,11 +443,11 @@ function DashboardPanel() {
         </div>
         <div className="stat-card">
           <div className="stat-head"><span className="stat-ico">💰</span><div className="stat-label">All-time revenue</div></div>
-          <div className="stat-num">{inr(t.total_revenue_paise)}</div>
+          <div className="stat-num"><Money paise={t.total_revenue_paise}/></div>
         </div>
         <div className="stat-card">
           <div className="stat-head"><span className="stat-ico">📅</span><div className="stat-label">Revenue this month</div></div>
-          <div className="stat-num">{inr(t.month_revenue_paise)}</div>
+          <div className="stat-num"><Money paise={t.month_revenue_paise}/></div>
         </div>
       </div>
 
@@ -471,7 +471,7 @@ function DashboardPanel() {
               <span style={{ fontSize: 22 }}>{b.cover_emoji}</span>
               <span className="leaderboard-name">{b.title}</span>
               <span className="muted fs13">{b.purchases} sale{b.purchases === 1 ? '' : 's'}</span>
-              <span className="leaderboard-points">{inr(b.revenue_paise)}</span>
+              <span className="leaderboard-points"><Money paise={b.revenue_paise}/></span>
             </div>
           ))}
         </div>
@@ -485,7 +485,7 @@ function DashboardPanel() {
                   <div className="muted fs13">{tx.item} · {tx.kind.replace('_', ' ')}</div>
                 </div>
                 <div className="tx-right">
-                  <span className="chip premium">₹{(tx.amount_paise / 100).toLocaleString('en-IN')}</span>
+                  <span className="chip premium"><Money paise={tx.amount_paise}/></span>
                   <span className="muted fs13">{new Date(tx.date).toLocaleDateString()}</span>
                 </div>
               </div>

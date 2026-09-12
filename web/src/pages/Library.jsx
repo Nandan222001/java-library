@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../lib/supabase.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { openRazorpayCheckout } from '../lib/razorpay.js';
+import { Money } from '../lib/money.jsx';
 
 export default function Library() {
   const nav = useNavigate();
@@ -103,7 +104,7 @@ export default function Library() {
                 <button className="btn primary" style={{ width: '100%', padding: '10px' }}
                         disabled={buying === b.id}
                         onClick={e => buy(e, b)}>
-                  {buying === b.id ? 'Unlocking…' : `Unlock for ₹${(b.price_paise / 100).toLocaleString('en-IN')}`}
+                  {buying === b.id ? 'Unlocking…' : <>Unlock for <Money paise={b.price_paise}/></>}
                 </button>
               ) : (
                 <Link to={`/books/${b.slug}/practice`} className="btn"

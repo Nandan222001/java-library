@@ -93,6 +93,11 @@ h2 { font-size: 1.8rem; }
 h3 { font-size: 1.4rem; }
 h4 { font-size: 1.1rem; }
 p { margin: 0 0 1.25em; }
+/* Playfair Display / Crimson Pro don't include a ₹ glyph, so it'd otherwise
+   fall back to a mismatched system serif inside those fonts — force a
+   neutral sans stack that reliably has it, wherever <Money/> is used
+   (see lib/money.jsx). */
+.inr-sym { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; }
 
 /* Layout */
 .container { max-width: 1140px; margin: 0 auto; padding: 100px var(--space-lg) 80px; }

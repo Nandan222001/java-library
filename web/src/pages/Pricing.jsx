@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../lib/supabase.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { openRazorpayCheckout } from '../lib/razorpay.js';
+import { Money } from '../lib/money.jsx';
 
 export default function Pricing() {
   const { me, user, refreshMe } = useAuth();
@@ -114,7 +115,7 @@ export default function Pricing() {
               )}
               <h3 style={{ fontSize: '1.6rem' }}>{p.name}</h3>
               <div className="price">
-                {p.price_paise === 0 ? '₹0' : `₹${(p.price_paise / 100).toLocaleString('en-IN')}`}
+                <Money paise={p.price_paise}/>
               </div>
               <div className="muted" style={{ marginBottom: '24px' }}>
                 {p.price_paise === 0 ? 'for casual reading' : `per ${p.interval_days >= 365 ? 'year' : 'month'}`}
