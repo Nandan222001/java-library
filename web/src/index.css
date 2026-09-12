@@ -273,10 +273,12 @@ p { margin: 0 0 1.25em; }
 .leaderboard-name { flex: 1; font-weight: 600; }
 .leaderboard-points { font: 700 14px 'Fira Code', monospace; color: var(--accent); }
 
-/* ---------- admin shell ---------- */
-.admin-shell { display: flex; width: 100%; min-height: 100vh; padding-top: 72px; }
+/* ---------- admin shell ----------
+   Standalone shell — Admin no longer renders under the global TopNav
+   (App.jsx), so nothing here is offset by its 72px height. */
+.admin-shell { display: flex; width: 100%; min-height: 100vh; }
 .admin-sidebar {
-  position: fixed; top: 72px; bottom: 0; left: 0; z-index: 120; width: 280px;
+  position: fixed; top: 0; bottom: 0; left: 0; z-index: 120; width: 280px;
   display: flex; flex-direction: column;
   background: linear-gradient(180deg, #1e150d 0%, #120c07 100%);
   border-right: 1px solid var(--line);
@@ -316,12 +318,7 @@ p { margin: 0 0 1.25em; }
 
 .admin-main { margin-left: 280px; flex: 1; min-width: 0; }
 .admin-topbar {
-  /* Solid background, no backdrop-filter — avoids stacking two
-     blurred/translucent layers directly against .topnav right above it.
-     (The actual title/chip clipping bug turned out to be unrelated — the
-     mobile nav's "closed" state painting over this area, see the fix on
-     `.topnav nav` below.) */
-  position: sticky; top: 72px; z-index: 60; display: flex; align-items: center; gap: 16px; min-height: 62px;
+  position: sticky; top: 0; z-index: 60; display: flex; align-items: center; gap: 16px; min-height: 62px;
   padding: 10px 26px; background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
@@ -335,7 +332,7 @@ p { margin: 0 0 1.25em; }
   font-size: 17px; cursor: pointer; transition: border-color .16s var(--ease);
 }
 .admin-burger:hover { border-color: var(--accent); }
-.admin-overlay { position: fixed; inset: 72px 0 0 0; z-index: 110; background: #000000a0; backdrop-filter: blur(2px); animation: fade-in .18s var(--ease); }
+.admin-overlay { position: fixed; inset: 0; z-index: 110; background: #000000a0; backdrop-filter: blur(2px); animation: fade-in .18s var(--ease); }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 .admin-content { padding: 26px 28px 70px; }
 

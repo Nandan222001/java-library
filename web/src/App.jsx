@@ -17,9 +17,13 @@ import Leaderboard from './pages/Leaderboard.jsx';
 export default function App() {
   return (
     <>
-      {/* Reader hides global nav — its own toolbar takes over */}
+      {/* Reader and Admin both hide the global nav — each has its own
+          complete toolbar/shell, and stacking TopNav on top of Admin's own
+          topbar produced two overlapping hamburger buttons. */}
       <Routes>
         <Route path="/read/:slug" element={<RequireAuth><Reader/></RequireAuth>} />
+        <Route path="/admin" element={
+          <RequireAuth><RequireAdmin><Admin/></RequireAdmin></RequireAuth>} />
         <Route path="*" element={<>
           <TopNav/>
           <Routes>
@@ -39,8 +43,6 @@ export default function App() {
               <RequireAuth><Leaderboard/></RequireAuth>} />
             <Route path="/books/:slug/practice" element={
               <RequireAuth><Practice/></RequireAuth>} />
-            <Route path="/admin" element={
-              <RequireAuth><RequireAdmin><Admin/></RequireAdmin></RequireAuth>} />
             <Route path="*" element={
               <div className="container center-x">
                 <h1>404</h1><p className="muted">That page drifted away…</p>
