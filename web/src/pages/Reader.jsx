@@ -6,10 +6,24 @@ import { mountReader } from '../lib/engineLoader.js';
 /* The legacy engine is imperatively mounted into `host`. The host MUST stay
  * mounted for the whole lifetime of this page, even while overlays (loading /
  * paywall / error) are shown on top of it — book.js measures it during init. */
+/* Per-user watermark tiled across the page while reading — this is the part
+ * of "screenshot protection" that's actually enforceable (see
+ * lib/contentProtection.js): it can't stop a screenshot, but it stamps every
+ * page with who was reading it, so a leaked copy is traceable to an
+ * account. Built as a small SVG data URI rather than a library so it stays
+ * dependency-free. */
+function watermarkUrl(text) {
+  const safe = String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='360' height='200'>` +
+    `<text x='180' y='104' font-family='monospace' font-size='13' fill='rgba(120,90,50,0.15)' ` +
+    `text-anchor='middle' transform='rotate(-28 180 104)'>${safe}</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
 export default function Reader() {
   const { slug } = useParams();
   const [params] = useSearchParams();
-  const { refreshMe } = useAuth();
+  const { user, refreshMe } = useAuth();
   const host = useRef(null);
   const [state, setState] = useState('loading'); // loading | ok | locked | error
   const [msg, setMsg] = useState('');
@@ -63,6 +77,14 @@ export default function Reader() {
   return (
     <>
       <div ref={host} data-reader={slug}/>
+
+      {state === 'ok' && user?.email && (
+        <div aria-hidden="true" style={{
+          position: 'fixed', inset: 0, zIndex: 60, pointerEvents: 'none',
+          backgroundImage: `url("${watermarkUrl(`${user.email} · ${new Date().toLocaleDateString()}`)}")`,
+          backgroundRepeat: 'repeat'
+        }}/>
+      )}
 
       {state === 'loading' && overlay(
         <>

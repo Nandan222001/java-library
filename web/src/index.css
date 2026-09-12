@@ -433,3 +433,27 @@ p { margin: 0 0 1.25em; }
   h1 { font-size: 2rem; }
   .plan-card.featured { transform: none; }
 }
+
+/* ---------- content protection ----------
+ * Deterrents against casual copying/right-click-saving/screen-recording —
+ * NOT a way to block an actual OS-level screenshot, which no website can
+ * do on desktop or mobile. See contentProtection.js for the full note.
+ * The reader's per-user watermark (Reader.jsx) is the half of this that
+ * actually holds up: it can't stop a screenshot, but makes a leaked page
+ * traceable to the account that took it. */
+body:not(.is-reader) { transition: filter .15s ease; }
+html.cp-dim body { filter: blur(16px) brightness(.7); }
+
+*:not(input):not(textarea):not([contenteditable="true"]) {
+  -webkit-user-select: none; -moz-user-select: none; user-select: none;
+}
+input, textarea, [contenteditable="true"] { user-select: text; }
+img { -webkit-user-drag: none; user-drag: none; }
+
+@media print {
+  body:not(.is-reader) > *, .reader-shell { display: none !important; }
+  body::after {
+    content: 'Printing is disabled for this content.';
+    display: block; padding: 60px; font: 20px 'Crimson Pro', serif; color: #000;
+  }
+}
