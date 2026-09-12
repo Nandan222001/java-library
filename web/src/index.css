@@ -316,8 +316,13 @@ p { margin: 0 0 1.25em; }
 
 .admin-main { margin-left: 280px; flex: 1; min-width: 0; }
 .admin-topbar {
+  /* Solid background, no backdrop-filter — avoids stacking two
+     blurred/translucent layers directly against .topnav right above it.
+     (The actual title/chip clipping bug turned out to be unrelated — the
+     mobile nav's "closed" state painting over this area, see the fix on
+     `.topnav nav` below.) */
   position: sticky; top: 72px; z-index: 60; display: flex; align-items: center; gap: 16px; min-height: 62px;
-  padding: 10px 26px; background: rgba(10, 6, 3, .85); backdrop-filter: blur(14px) saturate(1.3);
+  padding: 10px 26px; background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
 .atb-title h2 { margin: 0; font-size: 19px; }
@@ -430,12 +435,24 @@ p { margin: 0 0 1.25em; }
 @media (max-width: 900px) {
   .nav-toggle { display: flex; }
   .topnav nav {
+    /* padding/border/shadow must be 0 in the closed state, not just
+       max-height:0 — box-sizing:border-box only clamps the CONTENT box,
+       so a nonzero padding still rendered as a solid, opaque, hit-testable
+       bar directly under the fixed header even while "closed" (confirmed
+       via elementFromPoint: a nav <a> was the topmost element at y≈93,
+       painting over whatever page content sits there — invisible on most
+       pages, but it visually obscured the Admin topbar's title/chip since
+       those happen to sit in that exact band). Everything that adds visual
+       weight is gated on .open instead. */
     position: fixed; top: 72px; left: 0; right: 0; z-index: 100; flex-direction: column;
-    align-items: flex-start; gap: 2px; background: var(--bg); border-bottom: 1px solid var(--line);
-    padding: var(--space-md); max-height: 0; overflow-y: auto; overflow-x: hidden;
-    transition: max-height .3s var(--ease); box-shadow: var(--shadow-lg);
+    align-items: flex-start; gap: 2px; background: var(--bg);
+    padding: 0; border-bottom: 0 solid var(--line); max-height: 0; overflow-y: auto; overflow-x: hidden;
+    transition: max-height .3s var(--ease), padding .3s var(--ease); box-shadow: none;
   }
-  .topnav nav.open { max-height: calc(100vh - 72px); }
+  .topnav nav.open {
+    max-height: calc(100vh - 72px); padding: var(--space-md);
+    border-bottom: 1px solid var(--line); box-shadow: var(--shadow-lg);
+  }
   .topnav nav a { width: 100%; }
   .topnav nav a.active::after { display: none; }
   .topnav nav > div {
