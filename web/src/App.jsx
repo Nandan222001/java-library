@@ -20,12 +20,12 @@ export default function App() {
       {/* Reader hides global nav — its own toolbar takes over */}
       <Routes>
         <Route path="/read/:slug" element={<RequireAuth><Reader/></RequireAuth>} />
+        {/* The marketing page ships its own header that matches the design,
+            so it renders without the global TopNav. */}
+        <Route path="/" element={<Landing/>} />
         <Route path="*" element={<>
           <TopNav/>
           <Routes>
-            {/* Public marketing page — signed-in visitors get app CTAs, not a
-                dead end (see Landing.jsx → useAuth). */}
-            <Route path="/" element={<Landing/>} />
             <Route path="/login" element={<Login/>} />
             <Route path="/signup" element={<Signup/>} />
             <Route path="/pricing" element={<Pricing/>} />

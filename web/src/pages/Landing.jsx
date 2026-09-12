@@ -1,477 +1,380 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import { api } from '../lib/supabase.js';
-import { AmbientVideo, CountUp, Reveal, prefersReducedMotion } from '../components/Reveal.jsx';
-import { BOOKS, FAQS, FEATURES, PLANS_FALLBACK, STATS, STEPS, TOPICS } from '../lib/landingContent.js';
+import {
+  BOOKS, FEATURES, FOOTER_LINKS, HERO_STATS, NAV_LINKS, PLANS,
+  PRACTICE_POINTS, PRICING_ASSURANCES, SLIDES, SPREADS_PER_BOOK,
+  TESTIMONIALS, VIDEOS, FEATURED,
+} from '../lib/landingContent.js';
 import '../landing.css';
 
-/* Headline rendered word-by-word so each word can swing in on its own delay.
- * "FAANG" carries the amber gradient. */
-const H1_WORDS = [
-  { t: 'From' }, { t: 'zero' }, { t: 'to' }, { t: 'FAANG,', cls: 'grad' },
-  { t: 'one' }, { t: 'flipped' }, { t: 'page' }, { t: 'at' }, { t: 'time.' },
-];
+const SLIDE_MS = 6500;
 
-const rupeees = paise => `₹${(paise / 100).toLocaleString('en-IN')}`;
+/* ------------------------- top hero carousel ------------------------- */
+function HeroCarousel() {
+  const [idx, setIdx] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const count = SLIDES.length;
 
-function priceLabel(plan) {
-  if (!plan.price_paise) return { amount: '₹0', period: 'forever' };
-  if (plan.interval_days === 365) return { amount: rupeees(plan.price_paise), period: '/ year' };
-  if (plan.interval_days === 30) return { amount: rupeees(plan.price_paise), period: '/ month' };
-  return { amount: rupeees(plan.price_paise), period: `/${plan.interval_days}d` };
-}
+  const go = useCallback(n => setIdx(i => (i + n + count) % count), [count]);
 
-export default function Landing() {
-  const { user } = useAuth();
-  const heroRef = useRef(null);
-  const barRef = useRef(null);
-  const [plans, setPlans] = useState(PLANS_FALLBACK);
-  const [openFaq, setOpenFaq] = useState(0);
-
-  const primaryTo = user ? '/library' : '/signup';
-  const primaryLabel = user ? 'Open your library' : 'Start reading free';
-
-  /* ---------- scroll progress bar (rAF-throttled) ---------- */
   useEffect(() => {
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      const doc = document.documentElement;
-      const max = doc.scrollHeight - window.innerHeight;
-      const p = max > 0 ? Math.min(1, window.scrollY / max) : 0;
-      if (barRef.current) barRef.current.style.transform = `scaleX(${p})`;
-    };
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
-    update();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, []);
-
-  /* ---------- smooth in-page anchors, but never against the user's wishes ---------- */
-  useEffect(() => {
-    const html = document.documentElement;
-    const prev = html.style.scrollBehavior;
-    html.style.scrollBehavior = prefersReducedMotion() ? 'auto' : 'smooth';
-    return () => { html.style.scrollBehavior = prev; };
-  }, []);
-
-  /* ---------- live plans (falls back to the seeded catalog) ---------- */
-  useEffect(() => {
-    let alive = true;
-    api('/api/billing/plans')
-      .then(d => { if (alive && Array.isArray(d) && d.length) setPlans(d); })
-      .catch(() => {});
-    return () => { alive = false; };
-  }, []);
-
-  /* ---------- hero parallax: pointer position → CSS vars ---------- */
-  const onHeroMove = useCallback(e => {
-    const el = heroRef.current;
-    if (!el || prefersReducedMotion()) return;
-    const r = el.getBoundingClientRect();
-    el.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 2 - 1).toFixed(3));
-    el.style.setProperty('--my', ((e.clientY - r.top) / r.height * 2 - 1).toFixed(3));
-  }, []);
-
-  /* ---------- feature-card cursor glow ---------- */
-  const onCardMove = useCallback(e => {
-    const r = e.currentTarget.getBoundingClientRect();
-    e.currentTarget.style.setProperty('--gx', `${((e.clientX - r.left) / r.width * 100).toFixed(1)}%`);
-    e.currentTarget.style.setProperty('--gy', `${((e.clientY - r.top) / r.height * 100).toFixed(1)}%`);
-  }, []);
-
-  const marquee = useMemo(() => [...TOPICS, ...TOPICS], []);
+    if (paused) return undefined;
+    const t = setInterval(() => go(1), SLIDE_MS);
+    return () => clearInterval(t);
+  }, [paused, go]);
 
   return (
-    <>
-      {/* kept outside .lp so the fixed bar is never affected by the page's
-          overflow clipping */}
-      <div className="lp-progress" ref={barRef} aria-hidden="true" />
-
-      <div className="lp">
-      {/* ================= HERO ================= */}
-      <section
-        className="lp-hero"
-        id="top"
-        ref={heroRef}
-        onMouseMove={onHeroMove}
-        onMouseLeave={() => {
-          const el = heroRef.current;
-          if (el) { el.style.setProperty('--mx', 0); el.style.setProperty('--my', 0); }
-        }}
-      >
-        <AmbientVideo
-          className="lp-hero-video"
-          src="/landing/video/hero-loop.mp4"
-          poster="/landing/hero-library.jpg"
-          autoPlay
-        />
-        <div className="lp-hero-scrim" />
-        <div className="lp-hero-glow" />
-
-        <div className="lp-wrap lp-hero-grid">
-          <div>
-            <span className="lp-badge">
-              <span className="dot" />
-              {user ? 'You are signed in · reading now' : 'Free plan · no card needed'}
-            </span>
-
-            {/* the space between words is a real text node, outside the inline
-                blocks, so the heading still wraps on narrow screens */}
-            <h1 className="lp-h1">
-              {H1_WORDS.map((w, i) => (
-                <span key={i}>
-                  <span className={`w ${w.cls || ''}`} style={{ '--i': i }}>{w.t}</span>
-                  {i < H1_WORDS.length - 1 ? ' ' : ''}
-                </span>
-              ))}
-            </h1>
-
-            <p className="lp-lede-hero">
-              A real digital-books library for Java interview prep — a page-flip reader that
-              feels like paper, {BOOKS.length} deep-dive books with drills on every spread, and
-              progress that follows you from phone to laptop.
-            </p>
-
-            <div className="lp-cta-row">
-              <Link to={primaryTo} className="btn primary lp-shine">{primaryLabel} →</Link>
-              <a href="#library" className="btn ghost">See the shelf</a>
+    <div
+      className="dl-carousel"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      aria-roledescription="carousel"
+      aria-label="Digital Library highlights"
+    >
+      <div className="dl-track" style={{ transform: `translateX(-${idx * 100}%)` }}>
+        {SLIDES.map((s, i) => (
+          <div
+            key={s.h1}
+            className="dl-slide"
+            aria-hidden={i !== idx}
+            role="group"
+            aria-label={`Slide ${i + 1} of ${count}`}
+          >
+            <div className="dl-slide-copy">
+              <span className="dl-badge">{s.badge}</span>
+              <h1>
+                {s.h1}
+                <br />
+                <span className="dl-grad">{s.h2}</span>
+              </h1>
+              <p>{s.lead}</p>
+              <div className="dl-cta-row">
+                <Link to="/signup" className="dl-btn primary">{s.primary} →</Link>
+                <a href="#videos" className="dl-btn ghost"><span className="play">▶</span> {s.secondary}</a>
+              </div>
             </div>
-
-            <ul className="lp-trust">
-              <li>Free Forever plan</li>
-              <li>Practice Mode included</li>
-              <li>Works on mobile</li>
-              <li>Cancel anytime</li>
-            </ul>
+            <div className="dl-slide-art">
+              <img src={s.img} alt={s.alt} loading={i === 0 ? 'eager' : 'lazy'} />
+            </div>
           </div>
-
-          <div className="lp-hero-art" aria-hidden="true">
-            <div className="halo" />
-            <div className="lp-float f1"><div className="lp-float-in"><img src="/landing/cover-java.jpg" alt="" /></div></div>
-            <div className="lp-float f2"><div className="lp-float-in"><img src="/landing/cover-dsa.jpg" alt="" /></div></div>
-            <div className="lp-float f3"><div className="lp-float-in"><img src="/landing/cover-spring.jpg" alt="" /></div></div>
-          </div>
-        </div>
-
-        <a className="lp-scroll-cue" href="#library">Scroll</a>
-      </section>
-
-      {/* ================= TOPIC MARQUEE ================= */}
-      <div className="lp-marquee" aria-hidden="true">
-        <div className="lp-marquee-track">
-          {marquee.map((t, i) => <span key={i}>{t}</span>)}
-        </div>
+        ))}
       </div>
 
-      {/* ================= STATS ================= */}
-      <section className="lp-section tight">
-        <div className="lp-wrap">
-          <div className="lp-stats">
-            {STATS.map((s, i) => (
-              <Reveal key={s.label} className="lp-stat" delay={i * 90} style={{ '--sa': ['linear-gradient(90deg,var(--accent),var(--accent-2))', 'linear-gradient(90deg,var(--teal),#7fd8cf)', 'linear-gradient(90deg,var(--gold),#f3d27a)', 'linear-gradient(90deg,var(--green),#8fd6a6)'][i] }}>
-                <span className="ico">{s.icon}</span>
-                <div className="num"><CountUp value={s.value} suffix={s.suffix} /></div>
-                <b className="lbl">{s.label}</b>
-                <span className="sub">{s.sub}</span>
-              </Reveal>
+      <button type="button" className="dl-car-btn prev" aria-label="Previous slide" onClick={() => go(-1)}>‹</button>
+      <button type="button" className="dl-car-btn next" aria-label="Next slide" onClick={() => go(1)}>›</button>
+
+      <div className="dl-dots" role="tablist" aria-label="Choose slide">
+        {SLIDES.map((s, i) => (
+          <button
+            key={s.h1}
+            type="button"
+            className={i === idx ? 'on' : ''}
+            aria-label={`Go to slide ${i + 1}`}
+            aria-selected={i === idx}
+            role="tab"
+            onClick={() => setIdx(i)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------ page ------------------------------ */
+export default function Landing() {
+  const { user } = useAuth();
+  const startTo = user ? '/library' : '/signup';
+
+  return (
+    <div className="dl">
+      {/* ============================ NAV ============================ */}
+      <header className="dl-nav">
+        <div className="dl-nav-in">
+          <Link to="/" className="dl-brand">
+            <span className="dl-logo">📘</span>
+            <span>
+              <b>Digital Library</b>
+              <i>Read · Learn · Grow</i>
+            </span>
+          </Link>
+
+          <nav className="dl-links" aria-label="Primary">
+            {NAV_LINKS.map(l =>
+              l.hash ? (
+                <a key={l.label} href={l.hash} className={l.label === 'Home' ? 'on' : ''}>{l.label}</a>
+              ) : (
+                <Link key={l.label} to={l.to} className={l.label === 'Home' ? 'on' : ''}>{l.label}</Link>
+              ),
+            )}
+          </nav>
+
+          <div className="dl-nav-cta">
+            <button type="button" className="dl-icon" aria-label="Search books">🔍</button>
+            <Link to="/login" className="dl-btn outline sm">Login</Link>
+            <Link to={startTo} className="dl-btn primary sm">Get Started</Link>
+          </div>
+        </div>
+      </header>
+
+      {/* ============================ HERO ============================ */}
+      <section className="dl-hero" id="top">
+        <HeroCarousel />
+        <div className="dl-wrap">
+          <ul className="dl-stats">
+            {HERO_STATS.map(s => (
+              <li key={s.label}>
+                <span className="ic">{s.icon}</span>
+                <b>{s.value}</b>
+                <i>{s.label}</i>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 
-      {/* ================= LIBRARY ================= */}
-      <section className="lp-section paper" id="library">
-        <div className="lp-wrap">
-          <Reveal className="lp-head">
-            <span className="lp-eyebrow">The shelf</span>
-            <h2 className="lp-h2">Five books. One interview loop.</h2>
-            <p className="lp-lede">
-              Start on the free Java 8 → 17 title, then unlock Spring Boot, DSA, SQL and System
-              Design. Every book is written as spreads — theory on the left page, drills and
-              dry-runs on the right.
-            </p>
-          </Reveal>
-
-          <div className="lp-library-grid">
-            <Reveal className="lp-reel-frame" delay={80}>
-              <div className="lp-reel">
-                <AmbientVideo
-                  className="lp-reel-video"
-                  src="/landing/video/shelf-reel.mp4"
-                  poster="/landing/cover-java.jpg"
-                />
-                <span className="lp-reel-live"><span className="dot" />Shelf preview</span>
-              </div>
-              <p className="lp-reel-cap">
-                A loop over the covers — the reader itself flips page by page.
-              </p>
-            </Reveal>
-
-            <div className="lp-books">
-              {BOOKS.map((b, i) => (
-                <Reveal
-                  key={b.slug}
-                  as={Link}
-                  to={user ? '/library' : '/signup'}
-                  className="lp-book"
-                  delay={i * 70}
-                  style={{ '--ba': `${b.accent}66` }}
-                >
-                  <div className="shot">
-                    <img src={b.cover} alt={`${b.title} cover`} loading="lazy" />
-                    <span className="shine" />
-                    <span className={`chip tier ${b.tier === 'free' ? 'free' : 'premium'}`}>
-                      {b.tier === 'free' ? 'Free' : 'Premium'}
-                    </span>
-                    <div className="meta">
-                      <h3>{b.emoji} {b.title}</h3>
-                      <span className="em">{b.subtitle}</span>
-                    </div>
-                  </div>
-                  <p className="sub">
-                    <b>{b.tier === 'free' ? 'Read it now' : 'Unlock with Premium'}</b> — full
-                    spread-by-spread content, bookmarks and its own practice bank.
-                  </p>
-                </Reveal>
-              ))}
-            </div>
+      {/* ========================= WHY CHOOSE ========================= */}
+      <section className="dl-section" id="features">
+        <div className="dl-wrap">
+          <div className="dl-head center">
+            <h2>Why Choose Digital Library?</h2>
+            <p>More than just books — it&apos;s your complete learning ecosystem.</p>
           </div>
-
-          <Reveal className="lp-shelf-cta" delay={120}>
-            <Link to={user ? '/library' : '/signup'} className="btn primary">
-              {user ? 'Open the library' : 'Create a free account'} →
-            </Link>
-            <span className="muted">Free Forever opens every free book — no card.</span>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ================= READER SHOWCASE ================= */}
-      <section className="lp-section" id="reader">
-        <div className="lp-wrap lp-showcase">
-          <Reveal>
-            <div className="lp-device">
-              <img src="/landing/reader-device.jpg" alt="The Java Library reader open on a tablet" loading="lazy" />
-              <span className="scan" aria-hidden="true" />
-              <span className="lp-chipfloat a" aria-hidden="true">📖 Two-page spread</span>
-              <span className="lp-chipfloat b" aria-hidden="true">🌙 Night mode</span>
-              <span className="lp-chipfloat c" aria-hidden="true"><span className="k">Page 128</span> / 242</span>
-            </div>
-          </Reveal>
-
-          <div>
-            <Reveal>
-              <span className="lp-eyebrow">The reader</span>
-              <h2 className="lp-h2">It should feel like paper, not a webpage.</h2>
-              <p className="lp-lede">
-                The flip-book engine was built first and the app was wrapped around it. Curl,
-                sound, night mode and the contents drawer all survive on desktop and phone —
-                no rebuild, no “view online” PDF.
-              </p>
-            </Reveal>
-
-            <ul className="lp-checks">
-              {[
-                ['Real page turns', 'spreads on desktop, a single crisp page on small screens'],
-                ['Bookmarks & contents drawer', '★ any concept, jump back from the TOC'],
-                ['Hotkeys', '← / → or j / k to turn, f to fullscreen, t for the drawer'],
-                ['Your page, every device', 'position is saved to your account as you turn'],
-              ].map(([b, rest], i) => (
-                <Reveal as="li" key={b} delay={i * 80}>
-                  <span className="tick">✓</span>
-                  <span><b>{b}</b> — {rest}</span>
-                </Reveal>
-              ))}
-            </ul>
-
-            <div className="lp-flipbook" aria-hidden="true">
-              <div className="lp-fb-base">
-                <div className="lp-fb-side" />
-                <div className="lp-fb-side right" />
-              </div>
-              <div className="lp-fb-leaf" />
-              <div className="lp-fb-spine" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ================= FEATURES ================= */}
-      <section className="lp-section paper" id="features">
-        <div className="lp-wrap">
-          <Reveal className="lp-head center">
-            <span className="lp-eyebrow">Why it works</span>
-            <h2 className="lp-h2">Built to keep you turning pages</h2>
-            <p className="lp-lede">
-              Most prep is a wall of text and a promise. This is a library with a spine: a
-              reader you want to use, drills that check you, and progress you can see.
-            </p>
-          </Reveal>
-
-          <div className="lp-features">
-            {FEATURES.map((f, i) => (
-              <Reveal
-                key={f.title}
-                className="lp-feature"
-                delay={(i % 4) * 80}
-                onMouseMove={onCardMove}
-              >
-                <span className="tag">{f.tag}</span>
-                <span className="ico">{f.icon}</span>
+          <div className="dl-features">
+            {FEATURES.map(f => (
+              <article key={f.title} className="dl-feature">
+                <span className="ico" style={{ background: `${f.tint}1a`, color: f.tint }}>{f.icon}</span>
                 <h3>{f.title}</h3>
                 <p>{f.body}</p>
-              </Reveal>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ================= HOW IT WORKS ================= */}
-      <section className="lp-section" id="how">
-        <div className="lp-wrap">
-          <Reveal className="lp-head">
-            <span className="lp-eyebrow">How it goes</span>
-            <h2 className="lp-h2">From opening the cover to interview-ready</h2>
-          </Reveal>
-
-          <div className="lp-steps">
-            {STEPS.map((s, i) => (
-              <Reveal key={s.n} className="lp-step" delay={i * 110}>
-                <span className="pin"><span /></span>
-                <span className="n">STEP {s.n}</span>
-                <span className="ico">{s.icon}</span>
-                <h3>{s.title}</h3>
-                <p>{s.body}</p>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ================= PRICING ================= */}
-      <section className="lp-section paper" id="pricing">
-        <div className="lp-wrap">
-          <Reveal className="lp-head center">
-            <span className="lp-eyebrow">Pricing</span>
-            <h2 className="lp-h2">Start free. Upgrade when the shelf isn’t enough.</h2>
-            <p className="lp-lede">
-              Same plans as inside the app — no landing-page special, no hidden tier.
-            </p>
-          </Reveal>
-
-          <div className="lp-plans">
-            {plans.map((p, i) => {
-              const { amount, period } = priceLabel(p);
-              const featured = p.interval_days === 365;
-              return (
-                <Reveal key={p.plan_id} className="lp-plan-wrap" delay={i * 90}>
-                  <div className={`lp-plan ${featured ? 'featured' : ''}`}>
-                    {featured && <span className="ribbon">Best value · 2 months free</span>}
-                    <span className="pname">{p.name}</span>
-                    <div className="pprice">
-                      {amount} <small>{period}</small>
-                    </div>
-                    <ul>
-                      {(p.features || []).map(f => <li key={f}>{f}</li>)}
-                    </ul>
-                    <Link
-                      to={p.plan_id === 'free' ? '/signup' : '/pricing'}
-                      className={`btn ${featured ? 'primary' : ''}`}
-                    >
-                      {p.plan_id === 'free' ? 'Get started' : 'Choose this plan'}
-                    </Link>
-                  </div>
-                </Reveal>
-              );
-            })}
-          </div>
-
-          <Reveal className="lp-plan-note" delay={200}>
-            Payments run through Razorpay’s hosted checkout with server-side signature
-            verification — or the in-app sandbox gateway during development.
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ================= FAQ ================= */}
-      <section className="lp-section" id="faq">
-        <div className="lp-wrap">
-          <Reveal className="lp-head center">
-            <span className="lp-eyebrow">Questions</span>
-            <h2 className="lp-h2">Before you flip the first page</h2>
-          </Reveal>
-
-          <div className="lp-faq">
-            {FAQS.map((f, i) => {
-              const open = openFaq === i;
-              return (
-                <Reveal key={f.q} className={`lp-qa ${open ? 'open' : ''}`} delay={i * 55}>
-                  <button
-                    type="button"
-                    aria-expanded={open}
-                    onClick={() => setOpenFaq(open ? -1 : i)}
-                  >
-                    <span className="q-n">{String(i + 1).padStart(2, '0')}</span>
-                    {f.q}
-                    <span className="caret" aria-hidden="true">+</span>
-                  </button>
-                  <div className="lp-qa-a"><div><p>{f.a}</p></div></div>
-                </Reveal>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ================= FINAL CTA ================= */}
-      <section className="lp-section tight">
-        <div className="lp-wrap">
-          <Reveal className="lp-final">
-            <span className="lp-eyebrow" style={{ justifyContent: 'center' }}>Ready when you are</span>
-            <h2>Your next 400 questions are already indexed.</h2>
-            <p>
-              Create an account and the Free Forever plan opens the Java 8 → 17 book, the reader
-              and Practice Mode in under a minute.
-            </p>
-            <div className="lp-cta-row" style={{ justifyContent: 'center', marginBottom: 0 }}>
-              <Link to={primaryTo} className="btn primary lp-shine">{primaryLabel} →</Link>
-              <Link to="/pricing" className="btn ghost">Compare plans</Link>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ================= FOOTER ================= */}
-      <footer className="lp-foot">
-        <div className="lp-wrap">
-          <div className="lp-foot-grid">
+      {/* ========================== LIBRARY ========================== */}
+      <section className="dl-section tinted" id="library">
+        <div className="dl-wrap">
+          <div className="dl-head row">
             <div>
-              <div className="brand">☕ Java <i>LIBRARY</i></div>
-              <p className="copy" style={{ marginTop: 12, maxWidth: '38ch' }}>
-                A React · Node · Postgres digital-books platform for Java interview prep.
-              </p>
+              <span className="dl-eyebrow">OUR LIBRARY</span>
+              <h2>15 Books. One Goal.</h2>
+              <p>Master the skills that matter. From core programming to system design, cybersecurity and career growth.</p>
             </div>
-            <nav className="lp-foot-links">
-              <a href="#library">Shelf</a>
-              <a href="#reader">Reader</a>
-              <a href="#features">Features</a>
-              <a href="#pricing">Pricing</a>
-              <a href="#faq">FAQ</a>
-              <Link to="/login">Log in</Link>
-              <Link to="/signup">Sign up</Link>
-            </nav>
+            <a className="dl-more" href="#pricing">View All Books →</a>
           </div>
-          <p className="copy">© {new Date().getFullYear()} Java Library · Built with React, Express and Supabase.</p>
+
+          <div className="dl-books">
+            {BOOKS.map(b => (
+              <article key={b.title} className="dl-book">
+                <div className="shot"><img src={b.cover} alt={`${b.title} book cover`} loading="lazy" /></div>
+                <h3>{b.title}</h3>
+                <span>{b.chapters} Chapters</span>
+                <span>~ {SPREADS_PER_BOOK} Spreads</span>
+              </article>
+            ))}
+
+            <aside className="dl-shelf-sum">
+              <img src="/landing/books-stack.jpg" alt="Stack of colorful books" loading="lazy" />
+              <div>
+                <b>15 Books</b>
+                <b>450+ Chapters</b>
+                <b>750+ Spreads</b>
+                <b className="blue">Unlimited Growth</b>
+              </div>
+              <a href="#pricing" className="dl-round" aria-label="See plans">→</a>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================= FEATURED BOOK ========================= */}
+      <section className="dl-section dark" id="featured">
+        <div className="dl-wrap dl-featured">
+          <div className="dl-player">
+            <img src={FEATURED.img} alt="System Design course player preview" loading="lazy" />
+          </div>
+          <div className="dl-featured-copy">
+            <span className="dl-eyebrow">FEATURED BOOK</span>
+            <h2>{FEATURED.title}</h2>
+            <b className="sub">{FEATURED.tagline}</b>
+            <p>{FEATURED.body}</p>
+            <ul className="dl-checks">
+              {FEATURED.points.map(pt => (
+                <li key={pt}><span>✓</span>{pt}</li>
+              ))}
+            </ul>
+            <Link to={startTo} className="dl-btn primary">Watch Full Preview →</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ====================== INTERACTIVE LEARNING ====================== */}
+      <section className="dl-section lavender" id="practice">
+        <div className="dl-wrap">
+          <div className="dl-head">
+            <span className="dl-eyebrow">INTERACTIVE LEARNING</span>
+            <h2>Learn with Practice. Master with MCQs.</h2>
+            <p>Each chapter comes with MCQs, quizzes and progress tracking to help you stay on track and measure your growth.</p>
+          </div>
+          <div className="dl-split">
+            <div className="dl-laptop"><img src="/landing/mcq-laptop-light.jpg" alt="Quiz interface on a laptop" loading="lazy" /></div>
+            <ul className="dl-points">
+              {PRACTICE_POINTS.map(p => (
+                <li key={p.title}>
+                  <span className="ico" style={{ background: `${p.tint}1a`, color: p.tint }}>{p.icon}</span>
+                  <div><b>{p.title}</b><i>{p.body}</i></div>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <span className="dl-hand right">Small<br />steps<br />Big<br />Dreams ✏️</span>
+        </div>
+      </section>
+
+      {/* ======================== SEE IT IN ACTION ======================== */}
+      <section className="dl-section lavender2">
+        <div className="dl-wrap">
+          <div className="dl-head">
+            <span className="dl-eyebrow">SEE IT IN ACTION</span>
+            <h2>Watch Our Platform. Master with MCQs.</h2>
+            <p>Get a quick tour of how Digital Library works — from reading books to taking quizzes and tracking your progress.</p>
+          </div>
+          <div className="dl-split flip">
+            <div className="dl-laptop"><img src="/landing/mcq-laptop-dark.jpg" alt="Dark themed quiz interface on a laptop" loading="lazy" /></div>
+            <ul className="dl-points">
+              {PRACTICE_POINTS.map(p => (
+                <li key={p.title}>
+                  <span className="ico" style={{ background: `${p.tint}1a`, color: p.tint }}>{p.icon}</span>
+                  <div><b>{p.title}</b><i>{p.body}</i></div>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <span className="dl-hand right">Small<br />steps<br />Big<br />Dreams ✏️</span>
+        </div>
+      </section>
+
+      {/* ========================== VIDEO TOUR ========================== */}
+      <section className="dl-section night" id="videos">
+        <div className="dl-wrap">
+          <div className="dl-head">
+            <span className="dl-eyebrow">SEE THE PLATFORM</span>
+            <h2>Watch Our Platform in Action</h2>
+            <p>Get a quick tour of how Digital Library works — from reading books to taking quizzes and tracking your progress.</p>
+          </div>
+          <div className="dl-videos">
+            {VIDEOS.map(v => (
+              <article key={v.title} className="dl-video">
+                <div className="thumb">
+                  <img src={v.thumb} alt={`${v.title} video thumbnail`} loading="lazy" />
+                  <span className="play">▶</span>
+                  <b className="time">{v.time}</b>
+                </div>
+                <h3>{v.title}</h3>
+              </article>
+            ))}
+          </div>
+          <span className="dl-hand light right">Learn.<br />Grow.<br />Brighter<br />Future ✨</span>
+        </div>
+      </section>
+
+      {/* ========================= TESTIMONIALS ========================= */}
+      <section className="dl-section" id="stories">
+        <div className="dl-wrap">
+          <div className="dl-head">
+            <span className="dl-eyebrow">SUCCESS STORIES</span>
+            <h2>Real People. Real Progress.</h2>
+            <p>Join thousands of learners who are building their dream careers with Digital Library.</p>
+          </div>
+          <div className="dl-quotes">
+            {TESTIMONIALS.map(t => (
+              <article key={t.name} className="dl-quote">
+                <header>
+                  <img src={t.avatar} alt={`Portrait of ${t.name}`} loading="lazy" />
+                  <div><b>{t.name}</b><i>{t.role}</i></div>
+                </header>
+                <p>“{t.quote}”</p>
+                <span className="stars" aria-label="5 star rating">★★★★★</span>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* =========================== PRICING =========================== */}
+      <section className="dl-section tinted" id="pricing">
+        <div className="dl-wrap">
+          <div className="dl-head">
+            <span className="dl-eyebrow">SIMPLE &amp; TRANSPARENT</span>
+            <h2>Choose the Plan That Fits You</h2>
+            <p>Start with the free forever plan. Upgrade anytime.</p>
+          </div>
+
+          <div className="dl-pricing">
+            {PLANS.map(p => (
+              <article key={p.name} className={`dl-plan ${p.badge === 'Most Popular' ? 'hot' : ''}`}>
+                {p.badge && <span className={`flag ${p.badge === 'Most Popular' ? 'blue' : 'gold'}`}>{p.badge}</span>}
+                <b className="name">{p.name}</b>
+                <div className="price">{p.price} <small>{p.period}</small></div>
+                <ul>{p.features.map(f => <li key={f}>✓ {f}</li>)}</ul>
+                <Link to={p.name === 'Free' ? '/signup' : '/pricing'} className={`dl-btn ${p.name === 'Free' ? 'outline blue' : 'primary'}`}>{p.cta}</Link>
+              </article>
+            ))}
+
+            <aside className="dl-assure">
+              {PRICING_ASSURANCES.map(a => (
+                <div key={a.title}>
+                  <span className="ico">{a.icon}</span>
+                  <div><b>{a.title}</b><i>{a.body}</i></div>
+                </div>
+              ))}
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================= FINAL CTA ========================= */}
+      <section className="dl-final">
+        <div className="dl-wrap dl-final-in">
+          <div>
+            <h2>Ready to Build Your Future?</h2>
+            <p>Join thousands of learners and start your journey today.</p>
+          </div>
+          <div className="dl-final-cta">
+            <Link to={startTo} className="dl-btn primary big">Get Started Now →</Link>
+            <i>No credit card required.</i>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================== FOOTER =========================== */}
+      <footer className="dl-foot">
+        <div className="dl-wrap">
+          <div className="dl-foot-top">
+            <Link to="/" className="dl-brand">
+              <span className="dl-logo">📘</span>
+              <span><b>Digital Library</b><i>Read · Learn · Grow</i></span>
+            </Link>
+            <nav className="dl-foot-links" aria-label="Footer">
+              {FOOTER_LINKS.map(l => (
+                <a key={l} href={l === 'Home' ? '#top' : `#${l.toLowerCase()}`}>{l}</a>
+              ))}
+            </nav>
+            <div className="dl-social" aria-label="Social links">
+              <span>✉</span><span>𝕏</span><span>in</span><span>gh</span>
+            </div>
+          </div>
+          <div className="dl-foot-bottom">
+            <span>© 2025 Digital Library. All rights reserved.</span>
+            <span className="dl-legal">
+              <a href="#top">Privacy Policy</a>
+              <a href="#top">Terms of Service</a>
+              <a href="#top">Contact</a>
+            </span>
+          </div>
         </div>
       </footer>
-      </div>
-    </>
+    </div>
   );
 }

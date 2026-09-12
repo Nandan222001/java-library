@@ -1,201 +1,242 @@
-/* Landing-page content.
- *
- * Everything here mirrors what the app actually ships (book titles/tiers come
- * from server/scripts/seed-books.mjs, plans from supabase/schema.sql) so the
- * marketing page never promises something the reader can't deliver.
- * Cover art lives in web/public/landing/ (generated for this project). */
+/* Landing-page content for the "Digital Library" marketing page.
+ * All imagery lives in web/public/landing/ and was generated for this project. */
 
-export const BOOKS = [
+export const NAV_LINKS = [
+  { label: 'Home', to: '/' },
+  { label: 'Books', hash: '#library' },
+  { label: 'Features', hash: '#features' },
+  { label: 'Pricing', hash: '#pricing' },
+  { label: 'Practice', to: '/practice' },
+  { label: 'Leaderboard', to: '/leaderboard' },
+];
+
+/* ---------- top hero carousel slides ---------- */
+export const SLIDES = [
   {
-    slug: 'java-8-to-17',
-    title: 'Java 8 → 17 Essentials',
-    subtitle: 'Modern language features every interviewer expects',
-    emoji: '🚀',
-    tier: 'free',
-    cover: '/landing/cover-java.jpg',
-    accent: '#f0812f',
+    badge: 'YOUR TECH CAREER STARTS HERE',
+    h1: 'Learn Today.',
+    h2: 'Build Tomorrow.',
+    lead:
+      'The ultimate digital library for technical and career preparation. Expert-curated books, interactive MCQs, progress tracking, and a gamified learning experience — all in one place.',
+    img: '/landing/hero-laptop.jpg',
+    alt: 'Laptop showing the Digital Library reader with tech books beside it',
+    primary: 'Explore Books',
+    secondary: 'Watch Demo',
   },
   {
-    slug: 'spring-boot-practice',
-    title: 'Spring Boot in Practice',
-    subtitle: 'Build real REST services with Spring Boot, end to end',
-    emoji: '🍃',
-    tier: 'premium',
-    cover: '/landing/cover-spring.jpg',
-    accent: '#4caf6d',
+    badge: 'FEATURED BOOK',
+    h1: 'System Design.',
+    h2: 'Scale With Confidence.',
+    lead:
+      'Learn how to design and scale modern systems used by products like Netflix, Amazon and Google. Real-world examples, diagrams, and interview-focused content.',
+    img: '/landing/featured-video.jpg',
+    alt: 'System Design video course player with a load balancer diagram',
+    primary: 'Watch Full Preview',
+    secondary: 'View Chapters',
   },
   {
-    slug: 'dsa-crash-course',
-    title: 'Data Structures & Algorithms',
-    subtitle: 'The patterns that keep showing up in coding interviews',
-    emoji: '🧠',
-    tier: 'premium',
-    cover: '/landing/cover-dsa.jpg',
-    accent: '#6f93e8',
-  },
-  {
-    slug: 'sql-for-interviews',
-    title: 'SQL for Interviews',
-    subtitle: 'Joins, aggregations and window functions on real schemas',
-    emoji: '🗄️',
-    tier: 'premium',
-    cover: '/landing/cover-sql.jpg',
-    accent: '#3fb6ac',
-  },
-  {
-    slug: 'system-design-basics',
-    title: 'System Design Basics',
-    subtitle: 'A hands-on primer for the design interview',
-    emoji: '🏗️',
-    tier: 'premium',
-    cover: '/landing/cover-system.jpg',
-    accent: '#e2b53c',
+    badge: 'INTERACTIVE LEARNING',
+    h1: 'Read. Practice.',
+    h2: 'Master With MCQs.',
+    lead:
+      'Each chapter comes with MCQs, quizzes and progress tracking to help you stay on track and measure your growth — chapter after chapter, book after book.',
+    img: '/landing/mcq-laptop-light.jpg',
+    alt: 'Laptop showing an interactive MCQ quiz with progress panel',
+    primary: 'Try a Quiz',
+    secondary: 'See How It Works',
   },
 ];
 
-export const STATS = [
-  { icon: '❓', value: 400, suffix: '+', label: 'Interview questions', sub: 'answered page by page' },
-  { icon: '📚', value: 5, suffix: '', label: 'Deep-dive books', sub: 'Java · Spring · DSA · SQL · Design' },
-  { icon: '🧩', value: 24, suffix: '+', label: 'Core topics', sub: 'theory + drills on every spread' },
-  { icon: '🔄', value: 100, suffix: '%', label: 'Progress synced', sub: 'phone → laptop, same page' },
+export const HERO_STATS = [
+  { icon: '📚', value: '15', label: 'Books' },
+  { icon: '📑', value: '435', label: 'Chapters' },
+  { icon: '📄', value: '750', label: 'Spreads' },
+  { icon: '🎯', value: '100%', label: 'Career Focused' },
 ];
 
-/* Marquee under the hero — real chapters/subjects the library covers. */
-export const TOPICS = [
-  'Records', 'Sealed classes', 'Pattern matching', 'Streams & Collectors', 'Optional',
-  'Virtual threads', 'JVM memory', 'Garbage collection', 'REST controllers', 'Spring Data JPA',
-  'Bean scopes', 'Big-O', 'Two pointers', 'Sliding window', 'Dynamic programming', 'Graphs',
-  'Window functions', 'Indexes', 'Query plans', 'Caching', 'Load balancing', 'Sharding',
-  'CAP theorem', 'Rate limiting',
-];
-
+/* ---------- why choose ---------- */
 export const FEATURES = [
   {
-    icon: '📖',
-    title: 'A real page-flip reader',
-    body: 'Two-page spreads on desktop, a single crisp page on mobile. Curl, sound and night mode are built in — not a scroll-view faking it.',
-    tag: 'Reader',
+    icon: '📘',
+    tint: '#2563eb',
+    title: 'Expert-Curated Content',
+    body: 'Real industry experts covering real-world concepts and interview preparation.',
   },
   {
-    icon: '🎯',
-    title: 'Practice Mode after every read',
-    body: 'Every book ships an MCQ bank. Answer, get instant reasoning, and watch your accuracy climb spread by spread.',
-    tag: 'Practice',
-  },
-  {
-    icon: '🔥',
-    title: 'Streaks, points & badges',
-    body: 'Daily streaks and points turn revision into a habit. Badges unlock as you clear sections — quietly, without nagging popups.',
-    tag: 'Habit',
+    icon: '⚡',
+    tint: '#7c3aed',
+    title: 'Interactive MCQs',
+    body: 'Test your knowledge and track your progress.',
   },
   {
     icon: '🏆',
-    title: 'Leaderboard',
-    body: 'See where you stand against other readers this week. Friendly pressure beats another untouched study plan.',
-    tag: 'Community',
+    tint: '#16a34a',
+    title: 'Gamification',
+    body: 'Earn points, maintain streaks, climb the leaderboard.',
   },
   {
-    icon: '🔖',
-    title: 'Bookmarks & contents drawer',
-    body: 'Mark a key concept with ☆ from any page and jump straight back from the Contents drawer. Hotkeys included (←/→, j/k, f, t).',
-    tag: 'Reader',
+    icon: '🔒',
+    tint: '#ea580c',
+    title: 'Secure & Private',
+    body: 'Watermarked pages, anti-copy protection, and more.',
   },
   {
-    icon: '🔍',
-    title: 'Full-text search',
-    body: 'Postgres full-text search across every spread you are entitled to — find “volatile” or “window function” in a keystroke.',
-    tag: 'Search',
+    icon: '📱',
+    tint: '#0d9488',
+    title: 'Access Anywhere',
+    body: 'Read on web, tablet, or mobile. Your library, always with you.',
   },
   {
-    icon: '🔐',
-    title: 'Premium that stays premium',
-    body: 'Paywalls are enforced by Postgres RLS *and* the API, so locked spreads never reach an unentitled browser. Pages carry your own watermark.',
-    tag: 'Security',
-  },
-  {
-    icon: '🧑‍💼',
-    title: 'Publisher & admin tooling',
-    body: 'Roles for reader / publisher / admin, a full admin dashboard with revenue + signup graphs, bulk import, and per-reader access grants.',
-    tag: 'Platform',
+    icon: '🛡️',
+    tint: '#e11d48',
+    title: 'Content Protection',
+    body: 'Right-click, selection, and print disabled with per-user watermark.',
   },
 ];
 
-export const STEPS = [
+/* ---------- library shelf ---------- */
+export const BOOKS = [
+  { title: 'DSA', cover: '/landing/cover-dsa.jpg', chapters: 29 },
+  { title: 'System Design', cover: '/landing/cover-system.jpg', chapters: 29 },
+  { title: 'Spring Boot', cover: '/landing/cover-spring.jpg', chapters: 29 },
+  { title: 'Java 8 – 17', cover: '/landing/cover-java.jpg', chapters: 29 },
+  { title: 'MySQL', cover: '/landing/cover-sql.jpg', chapters: 28 },
+  { title: 'Python', cover: '/landing/cover-python.jpg', chapters: 29 },
+  { title: 'C', cover: '/landing/cover-c.jpg', chapters: 28 },
+  { title: 'C++', cover: '/landing/cover-cpp.jpg', chapters: 29 },
+  { title: 'JavaScript/TypeScript', cover: '/landing/cover-jsts.jpg', chapters: 29 },
+  { title: 'Docker/Kubernetes', cover: '/landing/cover-docker.jpg', chapters: 29 },
+  { title: 'Git & Version Control', cover: '/landing/cover-git.jpg', chapters: 29 },
+  { title: 'Ethical Hacking & Cybersecurity', cover: '/landing/cover-hacking.jpg', chapters: 29 },
+  { title: 'The Habit Gap', cover: '/landing/cover-habit.jpg', chapters: 29 },
+];
+
+export const SPREADS_PER_BOOK = 50;
+
+/* ---------- featured book ---------- */
+export const FEATURED = {
+  title: 'System Design',
+  tagline: 'Design Scalable Systems',
+  body:
+    'Learn how to design and scale modern systems used by products like Netflix, Amazon and Google. Real-world examples, diagrams, and interview-focused content.',
+  points: [
+    'Scalable architecture patterns',
+    'Load balancing & caching',
+    'Database design & sharding',
+    'Real-world case studies',
+  ],
+  img: '/landing/featured-video.jpg',
+};
+
+/* ---------- practice / MCQ sections ---------- */
+export const PRACTICE_POINTS = [
   {
-    n: '01',
-    icon: '✍️',
-    title: 'Create a free account',
-    body: 'Email + password, no card, no trial timer. The Free Forever plan opens every free book immediately.',
+    icon: '❓',
+    tint: '#2563eb',
+    title: 'Chapter-wise MCQs',
+    body: 'Test your understanding with chapter-based questions.',
   },
   {
-    n: '02',
-    icon: '📚',
-    title: 'Pick a book and flip',
-    body: 'Theory on the left page, dry-runs and drills on the right. Your reading position is saved the moment you turn.',
+    icon: '📊',
+    tint: '#7c3aed',
+    title: 'Track Progress',
+    body: 'See your learning journey in real time.',
   },
   {
-    n: '03',
     icon: '🎯',
-    title: 'Drill what you just read',
-    body: 'Practice Mode turns each spread into questions with reasoning, so a chapter ends as knowledge instead of a highlight.',
+    tint: '#e11d48',
+    title: 'Earn Points & Streaks',
+    body: 'Stay motivated with gamification.',
   },
   {
-    n: '04',
-    icon: '🚀',
-    title: 'Track it and go again',
-    body: 'Streaks, points, badges and the leaderboard keep the loop honest — then resume on any device exactly where you stopped.',
+    icon: '🏅',
+    tint: '#d97708',
+    title: 'Climb the Leaderboard',
+    body: 'Compete and be the best.',
   },
 ];
 
-/* Fallback copy for the pricing preview if /api/billing/plans is unreachable
- * (the live page always prefers the server's plans). */
-export const PLANS_FALLBACK = [
+/* ---------- video tour ---------- */
+export const VIDEOS = [
+  { title: '1. Platform Overview', time: '2:45', thumb: '/landing/video-thumb-1.jpg' },
+  { title: '2. Reader & Flipbook Engine', time: '3:12', thumb: '/landing/video-thumb-2.jpg' },
+  { title: '3. MCQs & Gamification', time: '2:38', thumb: '/landing/video-thumb-3.jpg' },
+];
+
+/* ---------- testimonials ---------- */
+export const TESTIMONIALS = [
   {
-    plan_id: 'free',
-    name: 'Free Forever',
-    price_paise: 0,
-    interval_days: 0,
-    features: ['Browse catalog', 'Read every FREE book', 'Synced reading progress'],
+    name: 'Rahul Sharma',
+    role: 'Software Engineer',
+    avatar: '/landing/avatar-1.jpg',
+    quote:
+      'The content is top-notch and the platform is smooth. The MCQs after each chapter make revision actually stick.',
   },
   {
-    plan_id: 'premium_monthly',
-    name: 'Premium Monthly',
-    price_paise: 19900,
-    interval_days: 30,
-    features: ['All PREMIUM books unlocked', 'Full-text search', 'New releases first'],
+    name: 'Priya Verma',
+    role: 'Full Stack Developer',
+    avatar: '/landing/avatar-2.jpg',
+    quote:
+      "I love the flip-book reader! It feels so smooth and natural. And the reading platform? It's easy to use for hours.",
   },
   {
-    plan_id: 'premium_yearly',
-    name: 'Premium Yearly',
-    price_paise: 149900,
-    interval_days: 365,
-    features: ['Everything in Monthly', '2 months free'],
+    name: 'Adit Kumar',
+    role: 'System Design Enthusiast',
+    avatar: '/landing/avatar-3.jpg',
+    quote:
+      'The system design section is incredible. Clear explanations with real-world examples and diagrams that finally click.',
+  },
+  {
+    name: 'Sneha Patel',
+    role: 'Placed at TCS',
+    avatar: '/landing/avatar-4.jpg',
+    quote:
+      'Helped me prepare for interviews and also improved my problem-solving skills. Highly recommended!',
   },
 ];
 
-export const FAQS = [
+/* ---------- pricing ---------- */
+export const PLANS = [
   {
-    q: 'Do I need to pay to start?',
-    a: 'No. The Free Forever plan needs no card and opens every free title — including the full Java 8 → 17 Essentials book and its practice bank. Upgrade only when you want the premium shelf.',
+    name: 'Free',
+    price: '₹0',
+    period: '',
+    badge: null,
+    cta: 'Start Free',
+    features: ['1 book free access', 'Read in web reader', 'Progress tracking'],
   },
   {
-    q: 'What do the premium books include?',
-    a: 'Each premium title is a full multi-section book with theory spreads, worked dry-runs and its own MCQ bank — Spring Boot, DSA, SQL and System Design. Premium Monthly is ₹199 and Premium Yearly is ₹1,499 (two months free).',
+    name: 'Pro',
+    price: '₹199',
+    period: '/ month',
+    badge: 'Most Popular',
+    cta: 'Get Pro',
+    features: [
+      'Access to all 15 books',
+      'Advanced MCQs & gamification',
+      'Full leaderboard access',
+      'Priority support',
+    ],
   },
   {
-    q: 'Can I read on my phone?',
-    a: 'Yes. The reader detects small screens and switches to a single-page mode with a mobile toolbar. Desktop keeps the two-page spread, hotkeys and the contents drawer.',
-  },
-  {
-    q: 'Will it remember where I stopped?',
-    a: 'Your flip position is written to your account as you read, so opening the same book on another device drops you on the same page — not back at the cover.',
-  },
-  {
-    q: 'How does payment work?',
-    a: 'Checkout runs through Razorpay’s hosted flow and the activation is verified with an HMAC-SHA256 signature check on the server (plus a signed webhook as a second path). In development the app runs a sandbox gateway that activates without charging.',
-  },
-  {
-    q: 'Is the content protected?',
-    a: 'Premium pages are gated in Postgres row-level security and again in the API, printing is disabled, and every rendered page carries a per-user watermark so a leak is traceable to the account that took it.',
+    name: 'Lifetime',
+    price: '₹1,999',
+    period: '/ one-time',
+    badge: 'Best Value',
+    cta: 'Buy Lifetime',
+    features: [
+      'Lifetime access to all content',
+      'All features included',
+      'Future books free',
+      'Priority support',
+    ],
   },
 ];
+
+export const PRICING_ASSURANCES = [
+  { icon: '🔒', title: 'Secure Payments', body: 'Razorpay, UPI & cards supported' },
+  { icon: '⚡', title: 'Instant Access', body: 'Start learning immediately' },
+  { icon: '↩️', title: 'Cancel Anytime', body: 'No questions asked' },
+];
+
+export const FOOTER_LINKS = ['Home', 'Books', 'Features', 'Pricing', 'Practice', 'Leaderboard', 'Contact'];
