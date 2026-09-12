@@ -3,6 +3,6 @@
   "version": 2,
   "framework": "vite",
   "rewrites": [
-    { "source": "/((?!api|engine|assets|vite.svg).*)", "destination": "/index.html" }
+    { "source": "/((?!api|engine|assets|landing|vite.svg).*)", "destination": "/index.html" }
   ]
 }

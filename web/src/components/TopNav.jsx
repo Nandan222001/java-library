@@ -16,6 +16,13 @@ export default function TopNav() {
     : premium ? <span className="chip premium">Premium</span>
               : <span className="chip free">Free</span>;
 
+  /* On the public landing page (/), guests get in-page section links instead of
+     app routes they can't open yet. Signed-in readers keep a way back in. */
+  const onLanding = loc.pathname === '/';
+  const anchor = (href, label) => (
+    <a href={href} key={href} onClick={() => setOpen(false)}>{label}</a>
+  );
+
   return (
     <header className="topnav">
       <Link to={isAdmin ? '/admin' : user ? '/dashboard' : '/'} className="brand">
@@ -33,11 +40,24 @@ export default function TopNav() {
       </button>
 
       <nav className={open ? 'open' : ''}>
-        <NavLink to="/library" end>Library</NavLink>
-        {user && !isAdmin && <NavLink to="/dashboard">Dashboard</NavLink>}
-        <NavLink to="/pricing">Pricing</NavLink>
-        {user && <NavLink to="/leaderboard">Leaderboard</NavLink>}
-        {isAdmin && <NavLink to="/admin">Admin</NavLink>}
+        {onLanding ? (
+          <>
+            {anchor('#library', 'Shelf')}
+            {anchor('#reader', 'Reader')}
+            {anchor('#features', 'Features')}
+            {anchor('#pricing', 'Pricing')}
+            {anchor('#faq', 'FAQ')}
+            {user && <NavLink to={isAdmin ? '/admin' : '/library'}>Library</NavLink>}
+          </>
+        ) : (
+          <>
+            <NavLink to="/library" end>Library</NavLink>
+            {user && !isAdmin && <NavLink to="/dashboard">Dashboard</NavLink>}
+            <NavLink to="/pricing">Pricing</NavLink>
+            {user && <NavLink to="/leaderboard">Leaderboard</NavLink>}
+            {isAdmin && <NavLink to="/admin">Admin</NavLink>}
+          </>
+        )}
         
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '12px', borderLeft: '1px solid var(--line)', paddingLeft: '24px' }}>
