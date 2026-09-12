@@ -21,10 +21,12 @@ java-library/
 │   └── scripts/import-book.mjs← uploads your existing java-book content
 └── web/                       ← React 18 + Vite
     ├── public/engine/         ← unmodified flip-book engine (js+css) as static assets
+    ├── public/landing/        ← generated art + two ambient MP4 loops (see “Landing art & motion”)
     └── src/
         ├── context/AuthContext.jsx   ← session · role/plan state · JWT bridge
         ├── lib/engineLoader.js       ← mounts engine into #host via BOOK_SRC→Node API
-        └── pages/  Dashboard · Library · Reader · Pricing · Account · Login · Signup · Admin
+        ├── landing.css               ← landing-page styles (scoped under .lp)
+        └── pages/  Landing · Dashboard · Library · Reader · Pricing · Account · Login · Signup · Admin
 ```
 
 ## 1 · Database
@@ -57,6 +59,25 @@ cd web
 npm install
 npm run dev                   # → http://localhost:5173  ('/api' proxied to :8080)
 ```
+`/` is now a **public landing page** (hero, shelf, reader showcase, features,
+pricing preview pulled live from `/api/billing/plans`, FAQ). Guests get in-page
+anchors in the nav; signed-in readers get app CTAs instead. `Login` lives at
+`/login`.
+
+### Landing art & motion
+All artwork in `web/public/landing/` is generated for this project (no stock
+licences): `hero-library.jpg`, `reader-device.jpg`, the five `cover-*.jpg`
+book jackets, and `paper-texture.jpg` (used as a section overlay).
+
+| Asset | What it is |
+|---|---|
+| `video/hero-loop.mp4` | 8s seamless ambient loop (slow ken-burns + lamp flicker + bokeh parallax), 1280×720, ~570 KB |
+| `video/shelf-reel.mp4` | 11.8s cross-faded slow push-ins over the five covers, 460×690, ~580 KB |
+
+Both are silent H.264 MP4s with `+faststart` and no audio track, played only
+while on screen (`AmbientVideo`) and never under `prefers-reduced-motion` —
+which also disables the CSS page-flip, the marquee, reveal-on-scroll and
+counters. Everything else on the page is CSS motion (no animation library).
 `.env` ships prefilled with the project URL + publishable key you provided.
 Sign up → then (optional admin):
 ```sql

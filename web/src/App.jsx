@@ -1,7 +1,8 @@
-import { Routes, Route } from 'react-router-dom';
+import { Link, Routes, Route } from 'react-router-dom';
 import TopNav from './components/TopNav.jsx';
 import RequireAuth from './components/RequireAuth.jsx';
 import RequireAdmin from './components/RequireAdmin.jsx';
+import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
 import Library from './pages/Library.jsx';
@@ -22,7 +23,9 @@ export default function App() {
         <Route path="*" element={<>
           <TopNav/>
           <Routes>
-            <Route path="/" element={<Login/>} />
+            {/* Public marketing page — signed-in visitors get app CTAs, not a
+                dead end (see Landing.jsx → useAuth). */}
+            <Route path="/" element={<Landing/>} />
             <Route path="/login" element={<Login/>} />
             <Route path="/signup" element={<Signup/>} />
             <Route path="/pricing" element={<Pricing/>} />
@@ -41,6 +44,9 @@ export default function App() {
             <Route path="*" element={
               <div className="container center-x">
                 <h1>404</h1><p className="muted">That page drifted away…</p>
+                <Link to="/" className="btn ghost" style={{ marginTop: 'var(--space-md)' }}>
+                  Back to the library
+                </Link>
               </div>} />
           </Routes>
         </>} />
