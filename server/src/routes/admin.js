@@ -586,8 +586,11 @@ r.post('/books', adminGate, async (req, res) => {
  * the Node API, so the wall is closed at both layers.
  * --------------------------------------------------------------- */
 r.get('/grants', adminGate, async (_req, res) => {
+  /* book_grants has TWO fks into profiles (user_id and granted_by), so a
+   * bare `profiles(...)` embed is ambiguous to PostgREST — pin it to the
+   * user_id relationship explicitly. */
   const { data, error } = await admin.from('book_grants')
-    .select('id,user_id,book_id,note,created_at,profiles(email,display_name),books(slug,title,cover_emoji)')
+    .select('id,user_id,book_id,note,created_at,profiles!user_id(email,display_name),books(slug,title,cover_emoji)')
     .order('created_at', { ascending: false }).limit(200);
   if (error) return res.status(500).json({ error: error.message });
   res.json((data || []).map(g => ({
