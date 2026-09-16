@@ -51,7 +51,8 @@ export default function Practice() {
       <h1>Practice 🎯</h1>
 
       {result && (
-        <div className={result.perfect ? 'infobox' : 'card'} style={{ marginBottom: 20, textAlign: 'center' }}>
+        <div className={(result.perfect ? 'infobox' : 'card') + ' practice-result' + (result.perfect ? ' perfect' : '')}
+             style={{ marginBottom: 20, textAlign: 'center' }}>
           <h2 style={{ margin: 0 }}>{result.score} / {result.total} correct</h2>
           <p className="muted">
             +{result.points_awarded} points{result.perfect ? ' · perfect round! 🏆' : ''}

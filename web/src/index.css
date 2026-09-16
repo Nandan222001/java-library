@@ -140,7 +140,14 @@ p { margin: 0 0 1.25em; }
   color: inherit; font-size: 22px; line-height: 1; cursor: pointer; border-radius: var(--radius-sm);
 }
 .nav-toggle:hover { background: #ffffff0a; }
-.nav-overlay { position: fixed; inset: 72px 0 0 0; z-index: 99; background: rgba(0, 0, 0, .55); backdrop-filter: blur(2px); }
+/* Always mounted, visibility toggled by .open — so it fades both in AND out
+   in step with the nav panel's own max-height transition, instead of
+   popping to full opacity and vanishing instantly (see TopNav.jsx). */
+.nav-overlay {
+  position: fixed; inset: 72px 0 0 0; z-index: 99; background: rgba(0, 0, 0, .55); backdrop-filter: blur(2px);
+  opacity: 0; pointer-events: none; transition: opacity .3s var(--ease);
+}
+.nav-overlay.open { opacity: 1; pointer-events: auto; }
 
 /* ---------- buttons ---------- */
 .btn {
@@ -153,7 +160,7 @@ p { margin: 0 0 1.25em; }
   box-shadow: var(--shadow-sm);
 }
 .btn:hover:not(:disabled) { border-color: var(--accent); background: var(--panel-hover); transform: translateY(-1.5px); box-shadow: var(--shadow-md); }
-.btn:active:not(:disabled) { transform: translateY(0); }
+.btn:active:not(:disabled) { transform: translateY(0) scale(.98); }
 .btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
 
 .btn.primary {
@@ -259,6 +266,21 @@ p { margin: 0 0 1.25em; }
 @media (max-width: 760px) { .dash-cols, .dash-charts { grid-template-columns: 1fr; } }
 
 /* ---------- practice ---------- */
+/* The one genuinely rare, high-emotion moment in the app (a finished
+   quiz — score, points, badges) deserves more than an instant teleport-in;
+   everywhere else in the app stays deliberately restrained. */
+.practice-result {
+  transition: opacity .38s var(--ease), transform .38s var(--ease);
+}
+@starting-style {
+  .practice-result { opacity: 0; transform: scale(.96) translateY(6px); }
+}
+.practice-result.perfect h2 { display: inline-block; animation: practice-perfect-bounce .5s var(--ease); }
+@keyframes practice-perfect-bounce {
+  0% { transform: translateY(0); }
+  40% { transform: translateY(-4px); }
+  100% { transform: translateY(0); }
+}
 .practice-opt {
   display: block; width: 100%; padding: 16px 20px; margin-bottom: var(--space-sm);
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-md);
@@ -337,9 +359,22 @@ p { margin: 0 0 1.25em; }
   font-size: 17px; cursor: pointer; transition: border-color .16s var(--ease);
 }
 .admin-burger:hover { border-color: var(--accent); }
-.admin-overlay { position: fixed; inset: 0; z-index: 110; background: #000000a0; backdrop-filter: blur(2px); animation: fade-in .18s var(--ease); }
-@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+/* Always mounted, visibility toggled by .open — the old one-shot
+   `animation: fade-in` only ever played on enter, so closing the sidebar
+   made the backdrop vanish instantly instead of fading out to match. */
+.admin-overlay {
+  position: fixed; inset: 0; z-index: 110; background: #000000a0; backdrop-filter: blur(2px);
+  opacity: 0; pointer-events: none; transition: opacity .18s var(--ease);
+}
+.admin-overlay.open { opacity: 1; pointer-events: auto; }
 .admin-content { padding: 26px 28px 70px; }
+/* Each tab switch (and the loading→content swap within a tab) mounts a
+   fresh subtree at .admin-content > * — fade it in instead of a hard
+   instant swap. */
+.admin-content > * { transition: opacity .2s var(--ease); }
+@starting-style {
+  .admin-content > * { opacity: 0; }
+}
 
 .admin-table { display: flex; flex-direction: column; gap: 14px; }
 .admin-row { display: flex; flex-direction: column; gap: 12px; }
@@ -414,8 +449,15 @@ p { margin: 0 0 1.25em; }
 
 /* ---------- utilities ---------- */
 .muted { color: var(--ink-muted); }
-.errbox { border: 1px solid rgba(239, 91, 82, .4); background: var(--red-soft); color: #ffb3ac; padding: 12px 16px; border-radius: var(--radius-md); margin-bottom: 20px; }
-.infobox { border: 1px solid rgba(76, 175, 109, .4); background: var(--green-soft); color: #b7e8c4; padding: 12px 16px; border-radius: var(--radius-md); margin-bottom: 20px; }
+.errbox, .infobox {
+  padding: 12px 16px; border-radius: var(--radius-md); margin-bottom: 20px;
+  transition: opacity .22s var(--ease), transform .22s var(--ease);
+}
+.errbox { border: 1px solid rgba(239, 91, 82, .4); background: var(--red-soft); color: #ffb3ac; }
+.infobox { border: 1px solid rgba(76, 175, 109, .4); background: var(--green-soft); color: #b7e8c4; }
+@starting-style {
+  .errbox, .infobox { opacity: 0; transform: translateY(-4px); }
+}
 
 .spin {
   width: 38px; height: 38px; border-radius: 50%; padding: 3px;

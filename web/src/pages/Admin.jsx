@@ -26,7 +26,9 @@ export default function Admin() {
 
   return (
     <div className="admin-shell">
-      {open && <div className="admin-overlay" onClick={() => setOpen(false)}/>}
+      {/* Always mounted (visibility toggled via .open) so it fades in AND
+          out instead of popping to full opacity and vanishing instantly. */}
+      <div className={'admin-overlay' + (open ? ' open' : '')} onClick={() => setOpen(false)}/>
 
       <aside className={'admin-sidebar' + (open ? ' open' : '')}>
         <div className="sb-brand">

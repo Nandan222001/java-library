@@ -87,8 +87,11 @@ export default function TopNav() {
         block for any position:fixed descendant, so an overlay nested inside
         it with bottom:0 silently resolves to zero height (it collapses
         against the 72px header box, not the viewport). Kept outside for the
-        same reason .admin-overlay lives outside its own filtered ancestor. */}
-    {open && <div className="nav-overlay" onClick={() => setOpen(false)}/>}
+        same reason .admin-overlay lives outside its own filtered ancestor.
+        Always mounted (visibility toggled via .open) so it fades in AND out
+        instead of popping to full opacity and vanishing instantly. */}
+    <div className={'nav-overlay' + (open ? ' open' : '')} onClick={() => setOpen(false)}/>
+
     </>
   );
 }
