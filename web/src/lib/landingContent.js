@@ -120,6 +120,33 @@ export const FEATURES = [
   },
 ];
 
+/* Content for the scroll-driven flip-story section — same words as four of
+ * the FEATURES cards above, kept as their own literal array (like
+ * PLANS_FALLBACK) rather than filtered from FEATURES, so this section's
+ * copy doesn't silently change if that array is reordered later. */
+export const FLIP_PAGES = [
+  {
+    icon: '🎯',
+    title: 'Practice Mode after every read',
+    body: 'Every book ships an MCQ bank. Answer, get instant reasoning, and watch your accuracy climb spread by spread.',
+  },
+  {
+    icon: '🔥',
+    title: 'Streaks, points & badges',
+    body: 'Daily streaks and points turn revision into a habit. Badges unlock as you clear sections, quietly, without nagging popups.',
+  },
+  {
+    icon: '🏆',
+    title: 'Leaderboard',
+    body: 'See where you stand against other readers this week. Friendly pressure beats another untouched study plan.',
+  },
+  {
+    icon: '🔍',
+    title: 'Full-text search',
+    body: 'Postgres full-text search across every spread you are entitled to: find “volatile” or “window function” in a keystroke.',
+  },
+];
+
 export const STEPS = [
   {
     n: '01',
