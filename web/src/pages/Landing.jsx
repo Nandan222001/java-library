@@ -115,7 +115,7 @@ export default function Landing() {
         <div className="lp-hero-glow" />
 
         <div className="lp-wrap lp-hero-grid">
-          <div>
+          <div className="lp-hero-copy">
             <span className="lp-badge">
               <span className="dot" />
               {user ? 'You are signed in · reading now' : 'Free plan · no card needed'}

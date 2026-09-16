@@ -488,6 +488,15 @@
   .lp-chipfloat.b { right: -6px; }
   .lp-qa-a p { padding-left: 22px; }
   .lp-hero-art { height: 300px; }
+  /* below 720px the hero art (book covers) is already centered under the
+     text, so a left-hugging heading next to a wide empty canvas reads as
+     stuck in the corner rather than a deliberate layout -- center the
+     whole copy block to match */
+  .lp-hero-copy { text-align: center; }
+  .lp-badge { margin-inline: auto; }
+  .lp-h1 { max-width: none; margin-inline: auto; }
+  .lp-lede-hero { margin-inline: auto; }
+  .lp-cta-row { justify-content: center; }
 }
 @media (max-width: 480px) {
   .lp-reel-frame { max-width: none; }

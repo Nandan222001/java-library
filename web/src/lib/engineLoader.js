@@ -133,9 +133,9 @@ export async function mountReader(container, { slug, startFlips = 0 }) {
   if (brandLogo) brandLogo.textContent = meta.book.cover_emoji || '📖';
   if (brandB) brandB.textContent = meta.book.title || '';
 
-  await injectScript('/engine/js/sound.js?v=6');
-  await injectScript('/engine/js/highlight.js?v=6');
-  await injectScript('/engine/js/book.js?v=6');     // builds leaves from window.BOOK
+  await injectScript('/engine/js/sound.js?v=7');
+  await injectScript('/engine/js/highlight.js?v=7');
+  await injectScript('/engine/js/book.js?v=7');     // builds leaves from window.BOOK
 
   window.__READER_FLUSH = async () => {              // progress sync hook
     try {
