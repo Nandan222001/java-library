@@ -411,15 +411,19 @@
    below that width, so .lp-flip-stage/.lp-flip-page never render there */
 
 /* reduced motion or narrow viewport: a plain static grid, no pin, no rotation */
-.lp-flip-static { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+/* Same parchment page look as the desktop .lp-flip-page (just stacked
+   normally, not pinned/rotating) — a plain dark card here would drop the
+   "book" identity that's the whole point of this section. */
+.lp-flip-static { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
 .lp-flip-static-card {
-  padding: 26px 24px; border-radius: var(--radius-lg);
-  background: linear-gradient(165deg, var(--panel-2), var(--panel));
-  border: 1px solid var(--line); box-shadow: var(--shadow-sm);
+  padding: 34px 30px; border-radius: 16px;
+  background: linear-gradient(155deg, #f8f0dd, #e8d9ba);
+  border: 1px solid #d3c19c;
+  box-shadow: 0 20px 50px -24px rgba(0, 0, 0, .6);
 }
-.lp-flip-static-card .ico { font-size: 28px; display: block; margin-bottom: 14px; }
-.lp-flip-static-card h3 { font-size: 1.16rem; margin-bottom: 8px; }
-.lp-flip-static-card p { color: var(--ink-dim); font-size: 15.2px; margin: 0; }
+.lp-flip-static-card .ico { font-size: 30px; display: block; margin-bottom: 14px; }
+.lp-flip-static-card h3 { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: #1c130a; margin: 0 0 8px; }
+.lp-flip-static-card p { color: #4a3a24; font-size: 15px; margin: 0; }
 
 /* ============================================================================
    FEATURES
