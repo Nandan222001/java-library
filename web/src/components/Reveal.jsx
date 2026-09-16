@@ -84,12 +84,22 @@ export function CountUp({ value, duration = 1500, suffix = '', prefix = '' }) {
   );
 }
 
+/* A video with `preload="metadata"` only starts fetching actual frame data
+ * once .play() fires — on a slow connection that leaves it playing from an
+ * empty buffer, which looks like stutter/flicker, not motion. Skip it the
+ * same way reduced-motion does and let the poster image stand in. */
+function prefersLessData() {
+  const c = typeof navigator !== 'undefined' && navigator.connection;
+  return !!c && (c.saveData || ['slow-2g', '2g'].includes(c.effectiveType));
+}
+
 /** AmbientVideo — plays only while on screen (saves CPU/battery on a page
- *  that already has a hero video) and never plays at all under reduced motion.
+ *  that already has a hero video), and never plays at all under reduced
+ *  motion or a slow/data-saving connection.
  *  The poster frame always renders, so there is no empty box without video. */
 export function AmbientVideo({ src, poster, className = '', autoPlay = false, ...rest }) {
   const ref = useRef(null);
-  const reduced = prefersReducedMotion();
+  const reduced = prefersReducedMotion() || prefersLessData();
 
   useEffect(() => {
     const el = ref.current;
