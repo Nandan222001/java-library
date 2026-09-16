@@ -195,8 +195,10 @@
   border: 1px solid var(--line); box-shadow: var(--shadow-md);
 }
 .lp-stat::before {
-  content: ''; position: absolute; inset: 0 0 auto 0; height: 3px;
-  background: var(--sa, var(--accent));
+  /* soft fade instead of a flat full-width colored bar — the blunt
+     solid-color top/side stripe is a recognizable AI-UI tell */
+  content: ''; position: absolute; inset: 0 0 auto 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--sa, var(--accent)), transparent);
 }
 .lp-stat .ico { font-size: 20px; }
 .lp-stat .num {
