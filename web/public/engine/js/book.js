@@ -592,7 +592,31 @@ function fit() {
   checkMobile();
   var r = wrapEl.getBoundingClientRect();
   var bw = isMobile ? 605 : 1210;
-  var s = Math.min(r.width / bw, r.height / 800, isMobile ? 1.3 : 1.06);
+  var s;
+  if (isMobile) {
+    /* Fit by leaf width first (mobile shows one leaf at a time), then stretch
+       the leaf's virtual height to match whatever height that width-fit scale
+       leaves available -- a book page reflows (see .pg-body{overflow-y:auto}
+       in page.css), so unlike the desktop spread it doesn't need to keep the
+       605:800 print-page aspect ratio. Without this a tall phone screen was
+       left with huge empty bars above/below a page scaled down only enough
+       to fit its width. */
+    var sWidth = Math.min(r.width / bw, 1.3);
+    var desiredLeafH = r.height / sWidth;
+    if (desiredLeafH < 800) {
+      /* landscape-ish viewport: even the native 800px height would overflow
+         at a width-fit scale, so fall back to shrinking the scale instead,
+         same as the desktop path below */
+      bookEl.style.setProperty('--leaf-h', '800px');
+      s = Math.min(sWidth, r.height / 800);
+    } else {
+      bookEl.style.setProperty('--leaf-h', Math.min(desiredLeafH, 1600).toFixed(1) + 'px');
+      s = sWidth;
+    }
+  } else {
+    bookEl.style.setProperty('--leaf-h', '800px');
+    s = Math.min(r.width / bw, r.height / 800, 1.06);
+  }
   curS = Math.max(0.28, s);
   bookEl.style.setProperty('--s', curS.toFixed(3));
   applyPan(true);

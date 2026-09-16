@@ -60,7 +60,7 @@
 *{box-sizing:border-box}
 html,body{height:100%}
 :root{
-  --tb-h:54px; --bb-h:58px;
+  --tb-h:54px; --bb-h:58px; --leaf-h:800px;
   --paper:#fbf4e2; --paper-shade:#f2e6ca; --paper-edge:#e5d5ae;
   --ink:#33261b; --ink-strong:#201509; --muted:#8a7763;
   --accent:#e76f00; --accent-deep:#a34e00; --royal:#26418f; --gold:#c9a227;
@@ -110,13 +110,18 @@ body.night *::-webkit-scrollbar-thumb{background:#ffffff24;border-radius:8px;bor
   align-items:center;justify-content:center;overflow:hidden}
 #bookWrap{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #bookPan{position:relative;transition:transform .3s ease;will-change:transform}
-#book{position:relative;width:1210px;height:800px;flex:0 0 auto;perspective:3400px;
+#book{position:relative;width:1210px;height:var(--leaf-h);flex:0 0 auto;perspective:3400px;
   transform:scale(var(--s,1));transform-origin:50% 50%;
   filter:drop-shadow(0 26px 46px rgba(0,0,0,.55))}
 /* NOTE: we deliberately use transform:scale(), never zoom — zoom is ignored or
    mis-composed by several mobile engines, which breaks backface culling below
    and makes both pages of a spread paint on top of each other. */
-.leaf{position:absolute;top:0;left:50%;width:605px;height:800px;
+/* --leaf-h defaults to the native 800px print-page height, but on mobile
+   fit() stretches it to match the phone's aspect ratio: .pg-body below
+   reflows its content into whatever height it's given (it's not a fixed
+   pre-paginated image), so there's no need to preserve the desktop 605:800
+   aspect and letterbox a narrow phone screen. */
+.leaf{position:absolute;top:0;left:50%;width:605px;height:var(--leaf-h);
   transform-style:preserve-3d;-webkit-transform-style:preserve-3d;
   transform-origin:left center;
   transition:transform .7s cubic-bezier(.45,.05,.15,1)}
