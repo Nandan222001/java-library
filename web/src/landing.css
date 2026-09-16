@@ -279,15 +279,14 @@
 /* ---------- reader showcase ---------- */
 .lp-showcase { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); gap: 56px; align-items: center; }
 .lp-device {
+  /* static tilt, not animated — this shows actual readable book content,
+     and a photo that never stops rocking in 3D reads as broken/jittery
+     rather than alive (it never settles, even for automated tooling). */
   position: relative; padding: 14px; border-radius: 22px;
   background: linear-gradient(160deg, #2a1d12, #140d07);
   border: 1px solid var(--line-strong);
   box-shadow: var(--shadow-lg), 0 40px 90px -40px rgba(240, 129, 47, .45);
-  animation: lp-tilt 12s var(--ease) infinite;
-}
-@keyframes lp-tilt {
-  0%, 100% { transform: perspective(1400px) rotateY(3.5deg) rotateX(1.4deg) translateY(-4px); }
-  50% { transform: perspective(1400px) rotateY(-2deg) rotateX(-1.4deg) translateY(6px); }
+  transform: perspective(1400px) rotateY(2deg) rotateX(0.6deg);
 }
 .lp-device img { display: block; width: 100%; border-radius: 13px; }
 .lp-device .scan {
@@ -546,7 +545,7 @@
 @media (prefers-reduced-motion: reduce) {
   .lp-reveal { opacity: 1 !important; transform: none !important; }
   .lp-h1 .w { opacity: 1 !important; transform: none !important; animation: none !important; }
-  .lp-hero-glow, .lp-float-in, .lp-chipfloat, .lp-device, .lp-fb-leaf, .lp-scan,
+  .lp-hero-glow, .lp-float-in, .lp-chipfloat, .lp-fb-leaf, .lp-scan,
   .lp-final::before, .lp-badge .dot, .lp-reel-live .dot,
   .btn.lp-shine::after, .lp-step .pin span { animation: none !important; }
   .lp-marquee-track { animation: none !important; }
