@@ -247,11 +247,10 @@ export default function Landing() {
         <div className="lp-wrap lp-showcase">
           <Reveal>
             <div className="lp-device">
-              <img src="/landing/reader-device.jpg" alt="The Java Library reader open on a tablet" loading="lazy" />
+              <img src="/landing/reader-screenshot.jpg" alt="A real spread from the Java 8 → 17 Essentials book, open in the reader" loading="lazy" />
               <span className="scan" aria-hidden="true" />
               <span className="lp-chipfloat a" aria-hidden="true">📖 Two-page spread</span>
-              <span className="lp-chipfloat b" aria-hidden="true">🌙 Night mode</span>
-              <span className="lp-chipfloat c" aria-hidden="true"><span className="k">Page 128</span> / 242</span>
+              <span className="lp-chipfloat b" aria-hidden="true">🔍 Instant search</span>
             </div>
           </Reveal>
 
