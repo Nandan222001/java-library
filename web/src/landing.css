@@ -407,11 +407,10 @@
   background: linear-gradient(90deg, transparent 60%, rgba(0, 0, 0, .5));
   opacity: 0;
 }
-@media (max-width: 720px) {
-  .lp-flip-stage { top: 76px; max-height: 480px; }
-}
+/* no <=720px override needed — FlipStory itself swaps to the static grid
+   below that width, so .lp-flip-stage/.lp-flip-page never render there */
 
-/* reduced motion: a plain static grid, no pin, no rotation */
+/* reduced motion or narrow viewport: a plain static grid, no pin, no rotation */
 .lp-flip-static { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
 .lp-flip-static-card {
   padding: 26px 24px; border-radius: var(--radius-lg);

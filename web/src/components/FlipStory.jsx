@@ -6,6 +6,16 @@ import { prefersReducedMotion } from './Reveal.jsx';
  * so the two page-turn animations on this site agree with each other. */
 const MAX_ROTATE = -172;
 
+/* A pinned/sticky scroll section needs a stage that's tall relative to the
+ * viewport, or the dead scroll distance below it (before the next section
+ * arrives) reads as a blank, broken page — exactly what phone viewports
+ * hit here, worse still with the browser chrome resizing mid-scroll.
+ * Below this width, skip the pin/rotation entirely. */
+function prefersStaticLayout() {
+  return prefersReducedMotion() ||
+    (typeof window !== 'undefined' && window.matchMedia('(max-width: 720px)').matches);
+}
+
 /** FlipStory — a stack of "book pages" pinned to the viewport while the
  * section scrolls past; each page rotates open in its own slice of that
  * scroll distance, turning to reveal the next one underneath.
@@ -16,9 +26,10 @@ const MAX_ROTATE = -172;
  * this project deliberately ships neither, and scroll-timelines still
  * don't work everywhere, which would silently hide these pages' content
  * instead of just losing a flourish. Skips all of it under reduced
- * motion and renders the same four points as a plain static grid instead. */
+ * motion or on a narrow/mobile viewport, and renders the same four
+ * points as a plain static grid instead. */
 export default function FlipStory({ pages }) {
-  const reduced = prefersReducedMotion();
+  const reduced = prefersStaticLayout();
   const trackRef = useRef(null);
   const pageRefs = useRef([]);
 
