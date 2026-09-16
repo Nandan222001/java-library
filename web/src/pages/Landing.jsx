@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../lib/supabase.js';
 import { AmbientVideo, CountUp, Reveal, prefersReducedMotion } from '../components/Reveal.jsx';
-import FlipStory from '../components/FlipStory.jsx';
-import { BOOKS, FAQS, FEATURES, FLIP_PAGES, PLANS_FALLBACK, STATS, STEPS, TOPICS } from '../lib/landingContent.js';
+import { BOOKS, FAQS, FEATURES, PLANS_FALLBACK, STATS, STEPS, TOPICS } from '../lib/landingContent.js';
 import { Money } from '../lib/money.jsx';
 import '../landing.css';
 
@@ -241,11 +240,6 @@ export default function Landing() {
             <span className="muted">Free Forever opens every free book, no card needed.</span>
           </Reveal>
         </div>
-      </section>
-
-      {/* ================= FLIP STORY ================= */}
-      <section className="lp-flip">
-        <FlipStory pages={FLIP_PAGES} />
       </section>
 
       {/* ================= READER SHOWCASE ================= */}

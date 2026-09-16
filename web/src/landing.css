@@ -368,64 +368,6 @@
 }
 
 /* ============================================================================
-   FLIP STORY — real page turns, driven by scroll (FlipStory.jsx)
-   ========================================================================== */
-.lp-flip-track { position: relative; }
-.lp-flip-stage {
-  position: sticky; top: 96px; height: calc(100svh - 96px); max-height: 640px;
-  display: flex; align-items: center; justify-content: center;
-}
-.lp-flip-book {
-  position: relative; width: min(560px, 88vw); height: min(420px, 62vh);
-  perspective: 2200px;
-}
-.lp-flip-page {
-  /* backface-visibility must live on the element that actually rotates —
-     put overflow:hidden on the SAME element (for the rounded corners) and
-     the spec forces transform-style back to flat, silently breaking the
-     backface culling: the page's mirrored back showed through past 90deg
-     instead of disappearing. The rounded/clipped visual lives on the
-     .sheet child instead, which needs no 3D properties of its own. */
-  position: absolute; inset: 0; transform-origin: left center; backface-visibility: hidden;
-  will-change: transform;
-}
-.lp-flip-page .sheet {
-  position: absolute; inset: 0; border-radius: 16px; overflow: hidden;
-  background: linear-gradient(155deg, #f8f0dd, #e8d9ba);
-  border: 1px solid #d3c19c;
-  box-shadow: 0 30px 70px -30px rgba(0, 0, 0, .6);
-}
-.lp-flip-page .face {
-  position: absolute; inset: 0; padding: 44px 46px;
-  display: flex; flex-direction: column; justify-content: center; gap: 14px;
-}
-.lp-flip-page .face .ico { font-size: 34px; }
-.lp-flip-page .face h3 { font-family: 'Playfair Display', serif; font-size: 1.7rem; color: #1c130a; margin: 0; }
-.lp-flip-page .face p { color: #4a3a24; font-size: 15.5px; margin: 0; max-width: 34ch; }
-.lp-flip-page .shade {
-  position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(90deg, transparent 60%, rgba(0, 0, 0, .5));
-  opacity: 0;
-}
-/* no <=720px override needed — FlipStory itself swaps to the static grid
-   below that width, so .lp-flip-stage/.lp-flip-page never render there */
-
-/* reduced motion or narrow viewport: a plain static grid, no pin, no rotation */
-/* Same parchment page look as the desktop .lp-flip-page (just stacked
-   normally, not pinned/rotating) — a plain dark card here would drop the
-   "book" identity that's the whole point of this section. */
-.lp-flip-static { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
-.lp-flip-static-card {
-  padding: 34px 30px; border-radius: 16px;
-  background: linear-gradient(155deg, #f8f0dd, #e8d9ba);
-  border: 1px solid #d3c19c;
-  box-shadow: 0 20px 50px -24px rgba(0, 0, 0, .6);
-}
-.lp-flip-static-card .ico { font-size: 30px; display: block; margin-bottom: 14px; }
-.lp-flip-static-card h3 { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: #1c130a; margin: 0 0 8px; }
-.lp-flip-static-card p { color: #4a3a24; font-size: 15px; margin: 0; }
-
-/* ============================================================================
    FEATURES
    ========================================================================== */
 .lp-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(268px, 1fr)); gap: 20px; }
