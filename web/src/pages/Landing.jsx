@@ -11,7 +11,7 @@ import '../landing.css';
  * "FAANG" carries the amber gradient. */
 const H1_WORDS = [
   { t: 'From' }, { t: 'zero' }, { t: 'to' }, { t: 'FAANG,', cls: 'grad' },
-  { t: 'one' }, { t: 'flipped' }, { t: 'page' }, { t: 'at' }, { t: 'time.' },
+  { t: 'one' }, { t: 'flipped' }, { t: 'page' }, { t: 'at' }, { t: 'a' }, { t: 'time.' },
 ];
 
 function priceLabel(plan) {
@@ -133,22 +133,14 @@ export default function Landing() {
             </h1>
 
             <p className="lp-lede-hero">
-              A real digital-books library for Java interview prep — a page-flip reader that
-              feels like paper, {BOOKS.length} deep-dive books with drills on every spread, and
-              progress that follows you from phone to laptop.
+              A real digital-books library for Java interview prep: a page-flip reader,
+              {' '}{BOOKS.length} deep-dive books, and progress that follows you everywhere.
             </p>
 
             <div className="lp-cta-row">
               <Link to={primaryTo} className="btn primary lp-shine">{primaryLabel} →</Link>
               <a href="#library" className="btn ghost">See the shelf</a>
             </div>
-
-            <ul className="lp-trust">
-              <li>Free Forever plan</li>
-              <li>Practice Mode included</li>
-              <li>Works on mobile</li>
-              <li>Cancel anytime</li>
-            </ul>
           </div>
 
           <div className="lp-hero-art" aria-hidden="true">
@@ -158,8 +150,6 @@ export default function Landing() {
             <div className="lp-float f3"><div className="lp-float-in"><img src="/landing/cover-spring.jpg" alt="" /></div></div>
           </div>
         </div>
-
-        <a className="lp-scroll-cue" href="#library">Scroll</a>
       </section>
 
       {/* ================= TOPIC MARQUEE ================= */}
@@ -193,7 +183,7 @@ export default function Landing() {
             <h2 className="lp-h2">Five books. One interview loop.</h2>
             <p className="lp-lede">
               Start on the free Java 8 → 17 title, then unlock Spring Boot, DSA, SQL and System
-              Design. Every book is written as spreads — theory on the left page, drills and
+              Design. Every book is written as spreads: theory on the left page, drills and
               dry-runs on the right.
             </p>
           </Reveal>
@@ -209,7 +199,7 @@ export default function Landing() {
                 <span className="lp-reel-live"><span className="dot" />Shelf preview</span>
               </div>
               <p className="lp-reel-cap">
-                A loop over the covers — the reader itself flips page by page.
+                A loop over the covers. The reader itself flips page by page.
               </p>
             </Reveal>
 
@@ -235,7 +225,7 @@ export default function Landing() {
                     </div>
                   </div>
                   <p className="sub">
-                    <b>{b.tier === 'free' ? 'Read it now' : 'Unlock with Premium'}</b> — full
+                    <b>{b.tier === 'free' ? 'Read it now' : 'Unlock with Premium'}</b>: full
                     spread-by-spread content, bookmarks and its own practice bank.
                   </p>
                 </Reveal>
@@ -247,7 +237,7 @@ export default function Landing() {
             <Link to={user ? '/library' : '/signup'} className="btn primary">
               {user ? 'Open the library' : 'Create a free account'} →
             </Link>
-            <span className="muted">Free Forever opens every free book — no card.</span>
+            <span className="muted">Free Forever opens every free book, no card needed.</span>
           </Reveal>
         </div>
       </section>
@@ -267,12 +257,11 @@ export default function Landing() {
 
           <div>
             <Reveal>
-              <span className="lp-eyebrow">The reader</span>
               <h2 className="lp-h2">It should feel like paper, not a webpage.</h2>
               <p className="lp-lede">
                 The flip-book engine was built first and the app was wrapped around it. Curl,
-                sound, night mode and the contents drawer all survive on desktop and phone —
-                no rebuild, no “view online” PDF.
+                sound, night mode and the contents drawer all survive on desktop and phone.
+                No rebuild, no “view online” PDF.
               </p>
             </Reveal>
 
@@ -285,7 +274,7 @@ export default function Landing() {
               ].map(([b, rest], i) => (
                 <Reveal as="li" key={b} delay={i * 80}>
                   <span className="tick">✓</span>
-                  <span><b>{b}</b> — {rest}</span>
+                  <span><b>{b}</b>: {rest}</span>
                 </Reveal>
               ))}
             </ul>
@@ -306,7 +295,6 @@ export default function Landing() {
       <section className="lp-section paper" id="features">
         <div className="lp-wrap">
           <Reveal className="lp-head center">
-            <span className="lp-eyebrow">Why it works</span>
             <h2 className="lp-h2">Built to keep you turning pages</h2>
             <p className="lp-lede">
               Most prep is a wall of text and a promise. This is a library with a spine: a
@@ -336,7 +324,6 @@ export default function Landing() {
       <section className="lp-section" id="how">
         <div className="lp-wrap">
           <Reveal className="lp-head">
-            <span className="lp-eyebrow">How it goes</span>
             <h2 className="lp-h2">From opening the cover to interview-ready</h2>
           </Reveal>
 
@@ -344,7 +331,6 @@ export default function Landing() {
             {STEPS.map((s, i) => (
               <Reveal key={s.n} className="lp-step" delay={i * 110}>
                 <span className="pin"><span /></span>
-                <span className="n">STEP {s.n}</span>
                 <span className="ico">{s.icon}</span>
                 <h3>{s.title}</h3>
                 <p>{s.body}</p>
@@ -361,7 +347,7 @@ export default function Landing() {
             <span className="lp-eyebrow">Pricing</span>
             <h2 className="lp-h2">Start free. Upgrade when the shelf isn’t enough.</h2>
             <p className="lp-lede">
-              Same plans as inside the app — no landing-page special, no hidden tier.
+              Same plans as inside the app, no landing-page special, no hidden tier.
             </p>
           </Reveal>
 
@@ -394,7 +380,7 @@ export default function Landing() {
 
           <Reveal className="lp-plan-note" delay={200}>
             Payments run through Razorpay’s hosted checkout with server-side signature
-            verification — or the in-app sandbox gateway during development.
+            verification, or the in-app sandbox gateway during development.
           </Reveal>
         </div>
       </section>
@@ -403,7 +389,6 @@ export default function Landing() {
       <section className="lp-section" id="faq">
         <div className="lp-wrap">
           <Reveal className="lp-head center">
-            <span className="lp-eyebrow">Questions</span>
             <h2 className="lp-h2">Before you flip the first page</h2>
           </Reveal>
 
@@ -433,7 +418,6 @@ export default function Landing() {
       <section className="lp-section tight">
         <div className="lp-wrap">
           <Reveal className="lp-final">
-            <span className="lp-eyebrow" style={{ justifyContent: 'center' }}>Ready when you are</span>
             <h2>Your next 400 questions are already indexed.</h2>
             <p>
               Create an account and the Free Forever plan opens the Java 8 → 17 book, the reader

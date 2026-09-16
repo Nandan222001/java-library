@@ -73,7 +73,7 @@ export const FEATURES = [
   {
     icon: '📖',
     title: 'A real page-flip reader',
-    body: 'Two-page spreads on desktop, a single crisp page on mobile. Curl, sound and night mode are built in — not a scroll-view faking it.',
+    body: 'Two-page spreads on desktop, a single crisp page on mobile. Curl, sound and night mode are built in, not a scroll-view faking it.',
     tag: 'Reader',
   },
   {
@@ -85,7 +85,7 @@ export const FEATURES = [
   {
     icon: '🔥',
     title: 'Streaks, points & badges',
-    body: 'Daily streaks and points turn revision into a habit. Badges unlock as you clear sections — quietly, without nagging popups.',
+    body: 'Daily streaks and points turn revision into a habit. Badges unlock as you clear sections, quietly, without nagging popups.',
     tag: 'Habit',
   },
   {
@@ -103,13 +103,13 @@ export const FEATURES = [
   {
     icon: '🔍',
     title: 'Full-text search',
-    body: 'Postgres full-text search across every spread you are entitled to — find “volatile” or “window function” in a keystroke.',
+    body: 'Postgres full-text search across every spread you are entitled to: find “volatile” or “window function” in a keystroke.',
     tag: 'Search',
   },
   {
     icon: '🔐',
     title: 'Premium that stays premium',
-    body: 'Paywalls are enforced by Postgres RLS *and* the API, so locked spreads never reach an unentitled browser. Pages carry your own watermark.',
+    body: 'Paywalls are enforced by Postgres RLS and the API, so locked spreads never reach an unentitled browser. Pages carry your own watermark.',
     tag: 'Security',
   },
   {
@@ -143,7 +143,7 @@ export const STEPS = [
     n: '04',
     icon: '🚀',
     title: 'Track it and go again',
-    body: 'Streaks, points, badges and the leaderboard keep the loop honest — then resume on any device exactly where you stopped.',
+    body: 'Streaks, points, badges and the leaderboard keep the loop honest. Resume on any device exactly where you stopped.',
   },
 ];
 
@@ -176,11 +176,11 @@ export const PLANS_FALLBACK = [
 export const FAQS = [
   {
     q: 'Do I need to pay to start?',
-    a: 'No. The Free Forever plan needs no card and opens every free title — including the full Java 8 → 17 Essentials book and its practice bank. Upgrade only when you want the premium shelf.',
+    a: 'No. The Free Forever plan needs no card and opens every free title, including the full Java 8 → 17 Essentials book and its practice bank. Upgrade only when you want the premium shelf.',
   },
   {
     q: 'What do the premium books include?',
-    a: 'Each premium title is a full multi-section book with theory spreads, worked dry-runs and its own MCQ bank — Spring Boot, DSA, SQL and System Design. Premium Monthly is ₹199 and Premium Yearly is ₹1,499 (two months free).',
+    a: 'Each premium title is a full multi-section book with theory spreads, worked dry-runs and its own MCQ bank: Spring Boot, DSA, SQL and System Design. Premium Monthly is ₹199 and Premium Yearly is ₹1,499 (two months free).',
   },
   {
     q: 'Can I read on my phone?',
@@ -188,7 +188,7 @@ export const FAQS = [
   },
   {
     q: 'Will it remember where I stopped?',
-    a: 'Your flip position is written to your account as you read, so opening the same book on another device drops you on the same page — not back at the cover.',
+    a: 'Your flip position is written to your account as you read, so opening the same book on another device drops you on the same page, not back at the cover.',
   },
   {
     q: 'How does payment work?',

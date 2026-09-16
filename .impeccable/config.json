@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "web/src/landing.css"
+        ],
+        "createdAt": "2026-09-16T15:35:29.104Z",
+        "reason": "pre-existing intentional brand treatment: single accent word (FAANG) in hero headline, reuses the app's existing amber-gradient token already used on buttons/nav elsewhere, not generic AI gradient-heading spam"
+      }
+    ]
+  }
+}

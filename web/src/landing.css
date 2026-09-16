@@ -141,10 +141,6 @@
   88%, 100% { transform: translateX(320%) skewX(-18deg); }
 }
 
-.lp-trust { display: flex; flex-wrap: wrap; gap: 8px 22px; list-style: none; padding: 0; margin: 0; }
-.lp-trust li { display: flex; align-items: center; gap: 8px; color: var(--ink-muted); font-size: 14.5px; }
-.lp-trust li::before { content: '✓'; color: var(--green); font-weight: 700; }
-
 /* hero artwork — floating real covers.
    NOTE: --mx/--my are written by JS on .lp-hero and read here through
    inheritance — re-declaring them on .lp-hero-art would freeze the parallax.
@@ -170,22 +166,6 @@
 .lp-float.f1 { width: 46%; left: 26%; top: 4%; z-index: 3; --rot: -4deg; --bd: 0s; --pk: 24px; }
 .lp-float.f2 { width: 34%; left: 2%; top: 34%; z-index: 2; --rot: 7deg; --bd: .9s; --pk: 12px; }
 .lp-float.f3 { width: 32%; left: 66%; top: 40%; z-index: 2; --rot: -9deg; --bd: 1.7s; --pk: 36px; }
-
-.lp-scroll-cue {
-  position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%);
-  display: flex; flex-direction: column; align-items: center; gap: 7px;
-  font: 600 10.5px 'Fira Code', monospace; letter-spacing: .18em; text-transform: uppercase;
-  color: var(--ink-muted);
-}
-.lp-scroll-cue::after {
-  content: ''; width: 1px; height: 40px;
-  background: linear-gradient(180deg, var(--accent), transparent);
-  animation: lp-cue 2.2s var(--ease) infinite;
-}
-@keyframes lp-cue {
-  0%, 100% { opacity: .3; transform: scaleY(.5); }
-  50% { opacity: 1; transform: scaleY(1); }
-}
 
 /* ============================================================================
    MARQUEE
@@ -432,7 +412,6 @@
   width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
   animation: lp-breathe 3.4s var(--ease) infinite;
 }
-.lp-step .n { font: 700 11px 'Fira Code', monospace; color: var(--accent-2); letter-spacing: .16em; }
 .lp-step h3 { font-size: 1.18rem; margin: 10px 0 8px; }
 .lp-step p { color: var(--ink-dim); font-size: 15.2px; margin: 0; }
 .lp-step .ico { font-size: 24px; display: block; margin-bottom: 12px; }
@@ -551,7 +530,6 @@
   .lp-chipfloat.b { right: -6px; }
   .lp-qa-a p { padding-left: 22px; }
   .lp-hero-art { height: 300px; }
-  .lp-scroll-cue { display: none; }
 }
 @media (max-width: 480px) {
   .lp-books { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
@@ -567,7 +545,7 @@
   .lp-reveal { opacity: 1 !important; transform: none !important; }
   .lp-h1 .w { opacity: 1 !important; transform: none !important; animation: none !important; }
   .lp-hero-glow, .lp-float-in, .lp-chipfloat, .lp-device, .lp-fb-leaf, .lp-scan,
-  .lp-final::before, .lp-scroll-cue::after, .lp-badge .dot, .lp-reel-live .dot,
+  .lp-final::before, .lp-badge .dot, .lp-reel-live .dot,
   .btn.lp-shine::after, .lp-step .pin span { animation: none !important; }
   .lp-marquee-track { animation: none !important; }
   .lp-fb-leaf { transform: rotateY(-30deg); }   /* hold a mid-turn pose instead */
