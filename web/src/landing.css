@@ -323,49 +323,6 @@
 }
 .lp-checks b { color: var(--ink); font-weight: 600; }
 
-/* CSS page-flip book (pure animation, no assets): an open spread with one leaf
-   that lifts, crosses the spine and fades — then resets while invisible. */
-.lp-flipbook {
-  position: relative; width: 248px; height: 176px; margin: 38px 0 0;
-  perspective: 1500px;
-}
-.lp-fb-base {
-  position: absolute; inset: 0; display: flex; overflow: hidden; border-radius: 7px;
-  border: 1px solid #6b5334; box-shadow: 0 22px 42px -20px rgba(0, 0, 0, .85);
-}
-.lp-fb-side { position: relative; flex: 1; background: linear-gradient(120deg, #f8f0dd, #e8d9ba); }
-.lp-fb-side.right { background: linear-gradient(240deg, #f8f0dd, #e8d9ba); }
-.lp-fb-side::before {
-  content: ''; position: absolute; inset: 15px 13px;
-  background-image: repeating-linear-gradient(180deg, rgba(120, 96, 60, .34) 0 1px, transparent 1px 10px);
-  opacity: .5;
-}
-.lp-fb-leaf {
-  position: absolute; top: 1px; bottom: 1px; left: 50%; width: calc(50% - 1px);
-  transform-origin: left center;
-  background: linear-gradient(90deg, #fdf7e8, #e4d2ad);
-  border: 1px solid #d3c19c; border-left: 0; border-radius: 0 6px 6px 0;
-  box-shadow: inset 12px 0 20px -14px rgba(60, 40, 10, .55);
-  animation: lp-flip 7s var(--ease) infinite;
-}
-.lp-fb-leaf::after {
-  content: ''; position: absolute; inset: 15px 13px;
-  background-image: repeating-linear-gradient(180deg, rgba(120, 96, 60, .3) 0 1px, transparent 1px 10px);
-  opacity: .45;
-}
-@keyframes lp-flip {
-  0% { transform: rotateY(0deg); opacity: 1; }
-  38% { transform: rotateY(-172deg); opacity: 1; }
-  44% { transform: rotateY(-178deg); opacity: 0; }
-  45% { transform: rotateY(0deg); opacity: 0; }
-  76% { transform: rotateY(0deg); opacity: 0; }
-  90%, 100% { transform: rotateY(0deg); opacity: 1; }
-}
-.lp-fb-spine {
-  position: absolute; top: 0; bottom: 0; left: 50%; width: 30px; transform: translateX(-15px);
-  background: linear-gradient(90deg, transparent, rgba(88, 66, 34, .4), transparent);
-  pointer-events: none;
-}
 
 /* ============================================================================
    FEATURES
@@ -545,9 +502,8 @@
 @media (prefers-reduced-motion: reduce) {
   .lp-reveal { opacity: 1 !important; transform: none !important; }
   .lp-h1 .w { opacity: 1 !important; transform: none !important; animation: none !important; }
-  .lp-hero-glow, .lp-float-in, .lp-chipfloat, .lp-fb-leaf, .lp-scan,
+  .lp-hero-glow, .lp-float-in, .lp-chipfloat, .lp-scan,
   .lp-final::before, .lp-badge .dot, .lp-reel-live .dot,
   .btn.lp-shine::after, .lp-step .pin span { animation: none !important; }
   .lp-marquee-track { animation: none !important; }
-  .lp-fb-leaf { transform: rotateY(-30deg); }   /* hold a mid-turn pose instead */
 }

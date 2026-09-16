@@ -278,15 +278,6 @@ export default function Landing() {
                 </Reveal>
               ))}
             </ul>
-
-            <div className="lp-flipbook" aria-hidden="true">
-              <div className="lp-fb-base">
-                <div className="lp-fb-side" />
-                <div className="lp-fb-side right" />
-              </div>
-              <div className="lp-fb-leaf" />
-              <div className="lp-fb-spine" />
-            </div>
           </div>
         </div>
       </section>
