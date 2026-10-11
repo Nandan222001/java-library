@@ -64,9 +64,9 @@ async function post(path, body) {
 
 let ok = 0, fail = 0;
 for (const f of files) {
-  const { meta, parts, spreads } = JSON.parse(readFileSync(join(dir, f), 'utf8'));
+  const { meta, parts, spreads, chapters: bookChapters } = JSON.parse(readFileSync(join(dir, f), 'utf8'));
   try {
-    const chapters = spreads.map((s, i) => ({
+    const chapters = bookChapters || spreads.map((s, i) => ({
       num: i + 1,
       part_id: s.l_kicker || (parts[0] && parts[0].part_id) || 'main',
       title: s.l_head || `Section ${i + 1}`,
