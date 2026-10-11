@@ -80,6 +80,11 @@ body.night{
    those pages rely on normal body scroll and have no inner scroll
    container of their own -- content taller than the viewport was just
    unreachable (users had to zoom out to see the rest of it). */
+/* The SPA theme (src/index.css) defines :root{--ink} as light cream for its dark UI.
+   Pin the reader's day-mode ink here so it can't be overridden by whichever
+   stylesheet loads last (cream text on cream paper = invisible). Night mode
+   keeps its own --ink from the body.night block above. */
+body.is-reader:not(.night){ --ink:#33261b }
 body.is-reader{
   margin:0; overflow:hidden;
   font-family:'Crimson Pro',Georgia,'Times New Roman',serif;
