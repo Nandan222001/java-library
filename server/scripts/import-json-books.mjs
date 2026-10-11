@@ -21,10 +21,28 @@ const API = (arg('--api') || 'http://localhost:8080').replace(/\/+$/, '');
 const SECRET = arg('--secret') || process.env.ADMIN_IMPORT_SECRET;
 const PUBLISH = !argv.includes('--no-publish');
 const ONLY = arg('--only');
+const EMAIL = arg('--email');
+const PASSWORD = arg('--password') || process.env.IMPORT_PASSWORD;
+const SB_URL = (arg('--supabase-url') || process.env.SUPABASE_URL || 'https://xddhhybyviuntnnymfbo.supabase.co').replace(/\/+$/, '');
+const SB_KEY = arg('--supabase-key') || process.env.SUPABASE_PUBLISHABLE_KEY;
 
-if (!SECRET) {
-  console.error('Missing secret: pass --secret <ADMIN_IMPORT_SECRET>');
+if (!SECRET && !(EMAIL && PASSWORD)) {
+  console.error('Pass --secret <ADMIN_IMPORT_SECRET>, or --email and --password of an admin account');
   process.exit(1);
+}
+
+/* Alternative auth: sign in as an admin user and send their JWT. */
+let TOKEN = null;
+if (EMAIL && PASSWORD) {
+  if (!SB_KEY) { console.error('Missing --supabase-key (the publishable key) for email login'); process.exit(1); }
+  const r = await fetch(`${SB_URL}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: SB_KEY },
+    body: JSON.stringify({ email: EMAIL, password: PASSWORD })
+  });
+  const j = await r.json();
+  if (!r.ok) { console.error(`Login failed: ${j.error_description || j.msg || r.status}`); process.exit(1); }
+  TOKEN = j.access_token;
 }
 
 const dir = join(dirname(fileURLToPath(import.meta.url)), 'books');
@@ -33,7 +51,10 @@ const files = readdirSync(dir).filter(f => f.endsWith('.json') && (!ONLY || f ==
 async function post(path, body) {
   const res = await fetch(`${API}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-admin-secret': SECRET },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : { 'x-admin-secret': SECRET })
+    },
     body: JSON.stringify(body)
   });
   const txt = await res.text();
