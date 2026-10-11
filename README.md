@@ -139,6 +139,17 @@ node scripts/seed-books.mjs --api http://localhost:8080 --secret $ADMIN_IMPORT_S
 You can also create an empty book shell from **Admin → Books → ✨ Add a new
 book**, then fill its content with the import script or the API.
 
+### PDF-sourced books
+`server/scripts/books/*.json` holds books converted from PDFs
+(*New World Order* and *The Illuminati Archives*), imported with:
+
+```bash
+cd server
+node scripts/import-json-books.mjs --api http://localhost:8080 --secret $ADMIN_IMPORT_SECRET
+```
+Both are `premium` tier; pass `--no-publish` to import as drafts, or
+`--only <slug>` for a single book.
+
 ## 📱 Reader parity kept
 Mobile single-page mode, transform-scale fix, hotkeys, TOC drawer,
 bookmarks, night mode, sounds — all carried over verbatim inside
