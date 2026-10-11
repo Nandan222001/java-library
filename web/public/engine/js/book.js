@@ -610,6 +610,7 @@ function fit() {
     /* landscape-ish viewport: even the native 800px height would overflow
        at a width-fit scale, so fall back to shrinking the scale instead */
     bookEl.style.setProperty('--leaf-h', '800px');
+    bookEl.style.setProperty('--fz', '1');
     s = Math.min(sWidth, r.height / 800);
   } else {
     /* 4000px is a defensive ceiling, not a realistic target -- content
@@ -617,7 +618,13 @@ function fit() {
        a very tall virtual leaf on an extreme aspect ratio (e.g. a phone
        stuck in "Desktop site" mode, which can report a viewport several
        times taller than wide). */
-    bookEl.style.setProperty('--leaf-h', Math.min(desiredLeafH, 4000).toFixed(1) + 'px');
+    var leafH = Math.min(desiredLeafH, 4000);
+    bookEl.style.setProperty('--leaf-h', leafH.toFixed(1) + 'px');
+    /* Flowed books (.flow pages) are paginated for the native 800px leaf, whose
+       text area is ~676px tall. On a taller leaf, grow their type so the text
+       still fills the page: wrapped text height scales with font-size^2. */
+    var fz = Math.sqrt(Math.max(leafH - 124, 676) / 676) * 0.97;
+    bookEl.style.setProperty('--fz', Math.max(1, Math.min(fz, 1.7)).toFixed(3));
     s = sWidth;
   }
   curS = Math.max(0.28, s);

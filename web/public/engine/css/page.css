@@ -212,3 +212,9 @@ body.night .da{fill:#c9a06a}
   background:radial-gradient(circle at 50% 0%,rgba(201,162,39,.14),transparent 70%),var(--paper);margin:12px 0}
 
 
+
+/* ---------- flowed (PDF-sourced) books: type scales with leaf height (see fit() in book.js) ---------- */
+.flow{font-size:calc(17px * var(--fz,1))}
+.flow h2.chap{font-size:calc(29px * var(--fz,1))}
+.flow h2.chap .chnum{font-size:calc(11px * var(--fz,1))}
+.flow h3.sec{font-size:calc(19.5px * var(--fz,1))}

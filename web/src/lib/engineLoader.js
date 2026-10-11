@@ -135,7 +135,7 @@ export async function mountReader(container, { slug, startFlips = 0 }) {
 
   await injectScript('/engine/js/sound.js?v=8');
   await injectScript('/engine/js/highlight.js?v=8');
-  await injectScript('/engine/js/book.js?v=8');     // builds leaves from window.BOOK
+  await injectScript('/engine/js/book.js?v=9');     // builds leaves from window.BOOK
 
   window.__READER_FLUSH = async () => {              // progress sync hook
     try {
